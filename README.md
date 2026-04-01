@@ -7,6 +7,9 @@ Supported targets:
 - ChatGPT
 - Cursor
 - Codex
+- Claude
+- Gemini
+- DeepSeek
 
 ## Features
 
@@ -16,7 +19,18 @@ Supported targets:
 - Lets the user choose `replace`, `copy`, or `replace + copy`
 - Parses the request with simple local rules
 - Supports configurable model-based transformation through free local or hosted models
+- Normalizes remote model output back into the selected target format
 - Replaces the original text with a model-specific optimized prompt
+
+## New interaction points
+
+- Command palette: `Optimize Prompt`
+- Command palette: `Prompt Optimizer: Setup Wizard`
+- Editor right-click menu
+- Status bar entry: `Prompt Optimizer`
+- Shortcut:
+  - macOS: `cmd+alt+p`
+  - Windows/Linux: `ctrl+alt+p`
 
 ## Configurable transformation
 
@@ -41,6 +55,13 @@ Recommended free usage patterns:
 - Hosted free-tier model: use `openai-compatible`, fill in your provider endpoint, API key, and available free model name
 
 The remote path is provider-agnostic as long as it supports an OpenAI-compatible `chat/completions` API.
+
+Setup wizard flow:
+
+1. Run `Prompt Optimizer: Setup Wizard`
+2. Choose `Ollama` or `OpenAI-Compatible`
+3. Fill in base URL, model name, and API key when needed
+4. Choose English output or keep source language
 
 Example `settings.json` for a local free model:
 
@@ -152,6 +173,12 @@ Direct体验方式:
    - `Copy to clipboard`
    - `Replace and copy`
 5. Optional: open Settings and search `Prompt Optimizer` to switch from local rules to a configured free model
+
+Package locally as a `.vsix`:
+
+```bash
+npm run package-vsix
+```
 
 This repo already includes runnable files in `dist/`, so the command can be experienced without first installing TypeScript locally.
 

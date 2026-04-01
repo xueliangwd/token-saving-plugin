@@ -11,7 +11,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:promptOptimizer.run"
+    "onCommand:promptOptimizer.run",
+    "onCommand:promptOptimizer.setupWizard"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -19,6 +20,34 @@
       {
         "command": "promptOptimizer.run",
         "title": "Optimize Prompt"
+      },
+      {
+        "command": "promptOptimizer.setupWizard",
+        "title": "Prompt Optimizer: Setup Wizard"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "promptOptimizer.run",
+          "when": "editorTextFocus",
+          "group": "navigation@10"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "promptOptimizer.run"
+        },
+        {
+          "command": "promptOptimizer.setupWizard"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "promptOptimizer.run",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
       }
     ],
     "configuration": {
@@ -90,12 +119,13 @@
           "description": "Fall back to local rule-based optimization if the remote request fails."
         }
       }
-    ]
+    }
   },
   "scripts": {
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "smoke-test": "node ./scripts/smoke-test.js"
+    "smoke-test": "node ./scripts/smoke-test.js",
+    "package-vsix": "node ./scripts/package-vsix.js"
   },
   "devDependencies": {
     "@types/node": "^22.13.11",

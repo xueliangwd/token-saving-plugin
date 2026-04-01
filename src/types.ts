@@ -1,4 +1,4 @@
-export type TargetModel = "chatgpt" | "cursor" | "codex";
+export type TargetModel = "chatgpt" | "cursor" | "codex" | "claude" | "gemini" | "deepseek";
 export type OutputMode = "replace" | "copy" | "both";
 
 export interface ParsedPrompt {
@@ -6,4 +6,12 @@ export interface ParsedPrompt {
   input: string[];
   constraints: string[];
   output: string[];
+}
+
+export interface SourcePayload {
+  text: string;
+  range?: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
 }

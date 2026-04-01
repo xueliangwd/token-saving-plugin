@@ -76,6 +76,12 @@ function getOutputStyle(targetModel: TargetModel): string {
       return "Minimal developer-friendly bullet list with a concise headline.";
     case "codex":
       return "Strict structure using TASK, INPUT, CONSTRAINTS, OUTPUT blocks.";
+    case "claude":
+      return "Readable structured prompt using Context, Requirements, Deliverable.";
+    case "gemini":
+      return "Clear prompt using Goal, Context, Constraints, Expected output.";
+    case "deepseek":
+      return "Compact engineering style using TASK, KEY INPUT, RULES, RESULT.";
     default:
       return "Strict structure using TASK, INPUT, CONSTRAINTS, OUTPUT blocks.";
   }

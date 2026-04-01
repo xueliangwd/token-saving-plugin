@@ -8,6 +8,12 @@ export function formatPrompt(data: ParsedPrompt, model: TargetModel): string {
       return formatCursor(data);
     case "codex":
       return formatCodex(data);
+    case "claude":
+      return formatClaude(data);
+    case "gemini":
+      return formatGemini(data);
+    case "deepseek":
+      return formatDeepSeek(data);
     default:
       return formatCodex(data);
   }
@@ -55,6 +61,60 @@ function formatCodex(data: ParsedPrompt): string {
   lines.push(formatSection("INPUT", data.input));
   lines.push(formatSection("CONSTRAINTS", data.constraints));
   lines.push(formatSection("OUTPUT", data.output));
+  return lines.join("\n");
+}
+
+function formatClaude(data: ParsedPrompt): string {
+  const lines: string[] = [toSentence(data.task)];
+
+  if (data.input.length > 0) {
+    lines.push(`Context:\n- ${data.input.join("\n- ")}`);
+  }
+
+  if (data.constraints.length > 0) {
+    lines.push(`Requirements:\n- ${data.constraints.join("\n- ")}`);
+  }
+
+  if (data.output.length > 0) {
+    lines.push(`Deliverable:\n- ${data.output.join("\n- ")}`);
+  }
+
+  return lines.join("\n\n");
+}
+
+function formatGemini(data: ParsedPrompt): string {
+  const lines: string[] = [`Goal: ${data.task}`];
+
+  if (data.input.length > 0) {
+    lines.push(`Context:\n- ${data.input.join("\n- ")}`);
+  }
+
+  if (data.constraints.length > 0) {
+    lines.push(`Constraints:\n- ${data.constraints.join("\n- ")}`);
+  }
+
+  if (data.output.length > 0) {
+    lines.push(`Expected output:\n- ${data.output.join("\n- ")}`);
+  }
+
+  return lines.join("\n\n");
+}
+
+function formatDeepSeek(data: ParsedPrompt): string {
+  const lines: string[] = [`TASK: ${data.task}`];
+
+  if (data.input.length > 0) {
+    lines.push(`KEY INPUT:\n- ${data.input.join("\n- ")}`);
+  }
+
+  if (data.constraints.length > 0) {
+    lines.push(`RULES:\n- ${data.constraints.join("\n- ")}`);
+  }
+
+  if (data.output.length > 0) {
+    lines.push(`RESULT:\n- ${data.output.join("\n- ")}`);
+  }
+
   return lines.join("\n");
 }
 

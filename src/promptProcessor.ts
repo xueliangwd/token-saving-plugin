@@ -7,7 +7,10 @@ const FILLER_PATTERNS = [
   /\bcould you\b/gi,
   /\bhelp me\b/gi,
   /\bi want you to\b/gi,
+  /\bmake sure\b/gi,
+  /\btry to\b/gi,
   /请帮我/gu,
+  /麻烦你/gu,
   /帮我/gu,
   /请/gu
 ];
@@ -21,7 +24,13 @@ const EXPLICIT_SECTION_PATTERNS = [
   { label: "constraint", type: "constraint" },
   { label: "validation", type: "constraint" },
   { label: "output", type: "output" },
-  { label: "result", type: "output" }
+  { label: "result", type: "output" },
+  { label: "功能", type: "input" },
+  { label: "输入", type: "input" },
+  { label: "要求", type: "constraint" },
+  { label: "约束", type: "constraint" },
+  { label: "限制", type: "constraint" },
+  { label: "输出", type: "output" }
 ] as const;
 
 const CONSTRAINT_KEYWORDS = [
@@ -29,13 +38,13 @@ const CONSTRAINT_KEYWORDS = [
   "should",
   "need to",
   "without",
-  "with",
   "using",
   "validation",
   "responsive",
   "lightweight",
   "local",
-  "only"
+  "only",
+  "must support"
 ];
 
 const OUTPUT_HINTS: Array<{ pattern: RegExp; value: string }> = [
@@ -44,8 +53,66 @@ const OUTPUT_HINTS: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bjavascript\b|\bjs\b/i, value: "javascript code" },
   { pattern: /\bpython\b/i, value: "python code" },
   { pattern: /\blogin page\b|\b登录页面\b/u, value: "UI implementation" },
-  { pattern: /\bextension\b/i, value: "extension code" }
+  { pattern: /\bextension\b|插件/u, value: "extension code" },
+  { pattern: /\bapi\b|接口/u, value: "API implementation" },
+  { pattern: /\bcomponent\b|组件/u, value: "component code" }
 ];
+
+const KNOWN_FIELDS: Array<{ pattern: RegExp; value: string }> = [
+  { pattern: /username|user name|用户名/i, value: "username" },
+  { pattern: /password|密码/i, value: "password" },
+  { pattern: /email|邮箱/i, value: "email" },
+  { pattern: /phone|手机号|mobile/i, value: "phone" },
+  { pattern: /otp|验证码/i, value: "otp code" },
+  { pattern: /token|令牌/i, value: "token" },
+  { pattern: /search|搜索/i, value: "search" },
+  { pattern: /filter|筛选/i, value: "filter" },
+  { pattern: /table|表格/i, value: "table" },
+  { pattern: /form|表单/i, value: "form" },
+  { pattern: /flutter/i, value: "flutter" },
+  { pattern: /react/i, value: "react" },
+  { pattern: /vue/i, value: "vue" },
+  { pattern: /vscode|vs code/i, value: "vscode extension" },
+  { pattern: /cursor/i, value: "cursor" },
+  { pattern: /chatgpt/i, value: "chatgpt" },
+  { pattern: /codex/i, value: "codex" },
+  { pattern: /claude/i, value: "claude" },
+  { pattern: /gemini/i, value: "gemini" },
+  { pattern: /deepseek/i, value: "deepseek" }
+];
+
+const TASK_HINTS: Array<{ pattern: RegExp; value: string }> = [
+  { pattern: /flutter.*(登录页面|login page)|登录页面.*flutter/iu, value: "build flutter login page" },
+  { pattern: /(vscode|vs code|cursor).*(extension|插件)|(extension|插件).*(vscode|vs code|cursor)/iu, value: "build vscode extension" },
+  { pattern: /(prompt|提示词).*(optimize|optimizer|优化)|(optimize|optimizer|优化).*(prompt|提示词)/iu, value: "optimize prompt" },
+  { pattern: /(api|接口).*(design|设计|build|实现)/iu, value: "design API" },
+  { pattern: /(component|组件).*(build|实现|create)/iu, value: "build component" }
+];
+
+const COMMON_SKIP_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "for",
+  "of",
+  "page",
+  "screen",
+  "with",
+  "without",
+  "validation",
+  "create",
+  "build",
+  "write",
+  "make",
+  "generate",
+  "need",
+  "should",
+  "must",
+  "support",
+  "use"
+]);
 
 export function parsePrompt(text: string): ParsedPrompt {
   const cleanedText = normalizeWhitespace(stripFillers(text));
@@ -59,7 +126,7 @@ export function parsePrompt(text: string): ParsedPrompt {
   const input = dedupeItems([
     ...extractInputs(cleanedText, rawSegments, task, constraints),
     ...explicitItems.input
-  ]).slice(0, 8);
+  ]).slice(0, 10);
   const output = dedupeItems([
     ...explicitItems.output,
     ...inferOutput(cleanedText, task)
@@ -89,46 +156,51 @@ function splitSegments(text: string): string[] {
 }
 
 function extractTask(text: string, segments: string[]): string {
-  const lower = text.toLowerCase();
-
-  if (/flutter/i.test(text) && /登录页面|login page/u.test(text)) {
-    return "build flutter login page";
+  for (const hint of TASK_HINTS) {
+    if (hint.pattern.test(text)) {
+      return hint.value;
+    }
   }
 
-  if (/(vscode|vs code|cursor)/i.test(text) && /extension/i.test(lower)) {
-    return "build vscode extension";
-  }
-
-  if (/prompt/i.test(text) && /(optimize|optimizer|优化)/i.test(text)) {
-    return "optimize prompt";
+  const explicitTask = extractTaskFromChinese(text);
+  if (explicitTask) {
+    return explicitTask;
   }
 
   const firstSegment = segments[0] ?? text;
   return normalizeTask(firstSegment || "handle the request");
 }
 
-function normalizeTask(segment: string): string {
-  let value = segment.trim();
-  value = value.replace(/^(to\s+)/i, "");
-  value = value.replace(/^(write|create|build|generate|make)\b/i, (match) => match.toLowerCase());
-  value = translateCommonChinese(value);
+function extractTaskFromChinese(text: string): string | undefined {
+  const translated = translateCommonChinese(text).toLowerCase();
+  if (translated.includes("login page") && translated.includes("flutter")) {
+    return "build flutter login page";
+  }
+  if (translated.includes("plugin") || translated.includes("extension")) {
+    return "build vscode extension";
+  }
+  return undefined;
+}
 
-  if (/登录页面/u.test(value) && !/\bflutter\b/i.test(value)) {
+function normalizeTask(segment: string): string {
+  let value = translateCommonChinese(segment.trim());
+  value = value.replace(/^(to\s+)/i, "");
+  value = value.replace(/^(write|create|build|generate|make|implement|design)\b/i, (match) => match.toLowerCase());
+  value = value.replace(/\bneed(s)?\s+to\b/gi, "");
+  value = value.replace(/\s+/g, " ").trim();
+
+  if (/login page/i.test(value) && !/\bflutter\b/i.test(value) && /flutter/i.test(segment)) {
     value = `build flutter ${value}`;
   }
 
-  if (/[A-Z]/.test(value)) {
-    return value;
-  }
-
-  return value.toLowerCase();
+  return value ? value.toLowerCase() : "handle the request";
 }
 
 function extractConstraints(segments: string[]): string[] {
   const values = new Set<string>();
 
   for (const segment of segments) {
-    const normalized = segment.trim();
+    const normalized = translateCommonChinese(segment.trim());
     if (!normalized) {
       continue;
     }
@@ -138,16 +210,32 @@ function extractConstraints(segments: string[]): string[] {
       values.add(toEnglishConstraint(normalized));
     }
 
-    if (/校验/u.test(normalized)) {
-      if (/用户名/u.test(normalized) && /密码/u.test(normalized)) {
+    if (/校验|验证/u.test(segment)) {
+      if (/(用户名|username)/iu.test(segment) && /(密码|password)/iu.test(segment)) {
         values.add("validate username and password");
       } else {
         values.add("add validation");
       }
     }
 
-    if (/非空|non[- ]?empty/i.test(normalized)) {
+    if (/非空|non[- ]?empty/i.test(segment)) {
       values.add("non-empty validation");
+    }
+
+    if (/响应式|responsive/u.test(segment)) {
+      values.add("responsive layout");
+    }
+
+    if (/本地处理|local/u.test(segment)) {
+      values.add("local processing only");
+    }
+
+    if (/轻量|lightweight/u.test(segment)) {
+      values.add("lightweight implementation");
+    }
+
+    if (/不要|不使用|without/u.test(segment) && /(ai|dependency|依赖)/iu.test(segment)) {
+      values.add("avoid heavy AI dependencies");
     }
   }
 
@@ -162,58 +250,34 @@ function extractInputs(
 ): string[] {
   const values = new Set<string>();
   const taskWords = new Set(task.toLowerCase().split(/\s+/));
-  const constraintWords = new Set(
-    constraints.flatMap((item) => item.toLowerCase().split(/[\s-]+/))
-  );
+  const constraintWords = new Set(constraints.flatMap((item) => item.toLowerCase().split(/[\s-]+/)));
 
   for (const knownField of inferKnownFields(text)) {
     values.add(knownField);
   }
 
   for (const segment of segments) {
-    const englishBits = segment.match(/\b[a-zA-Z][a-zA-Z0-9_-]*\b/g) ?? [];
+    const translated = translateCommonChinese(segment);
+    const englishBits = translated.match(/\b[a-zA-Z][a-zA-Z0-9+._-]*\b/g) ?? [];
     for (const bit of englishBits) {
       const lower = bit.toLowerCase();
-      if (taskWords.has(lower) || constraintWords.has(lower)) {
-        continue;
-      }
-      if (COMMON_SKIP_WORDS.has(lower)) {
+      if (taskWords.has(lower) || constraintWords.has(lower) || COMMON_SKIP_WORDS.has(lower)) {
         continue;
       }
       values.add(lower);
     }
   }
 
-  return Array.from(values).slice(0, 6);
+  return Array.from(values).slice(0, 8);
 }
 
 function inferKnownFields(text: string): string[] {
   const values: string[] = [];
-  const lower = text.toLowerCase();
 
-  if (/username|user name|用户名/i.test(text)) {
-    values.push("username");
-  }
-
-  if (/password|密码/i.test(text)) {
-    values.push("password");
-  }
-
-  if (/email|邮箱/i.test(text)) {
-    values.push("email");
-  }
-
-  if (/flutter/i.test(text)) {
-    values.push("flutter");
-  }
-
-  if (/vscode|vs code/i.test(text)) {
-    values.push("vscode extension");
-  }
-
-  if (/chatgpt|cursor|codex/i.test(lower)) {
-    const models = Array.from(new Set(lower.match(/\b(chatgpt|cursor|codex)\b/g) ?? []));
-    values.push(...models);
+  for (const item of KNOWN_FIELDS) {
+    if (item.pattern.test(text)) {
+      values.push(item.value);
+    }
   }
 
   return values;
@@ -228,8 +292,12 @@ function inferOutput(text: string, task: string): string[] {
     }
   }
 
-  if (values.size === 0) {
+  if (/\bprompt\b|提示词/u.test(text)) {
     values.add("optimized prompt");
+  }
+
+  if (values.size === 0) {
+    values.add("implementation");
   }
 
   return Array.from(values);
@@ -247,7 +315,7 @@ function extractExplicitItems(text: string): {
   };
 
   for (const section of EXPLICIT_SECTION_PATTERNS) {
-    const pattern = new RegExp(`${section.label}\\s*[:：]\\s*([^\\n]+)`, "gi");
+    const pattern = new RegExp(`${section.label}\\s*[:：]\\s*([^\\n]+)`, "giu");
     const matches = Array.from(text.matchAll(pattern));
     for (const match of matches) {
       const items = splitList(match[1] ?? "");
@@ -280,19 +348,17 @@ function dedupeItems(items: string[]): string[] {
 }
 
 function toEnglishConstraint(segment: string): string {
-  if (/校验/u.test(segment)) {
-    if (/用户名/u.test(segment) && /密码/u.test(segment)) {
-      return "validate username and password";
-    }
-    return "add validation";
-  }
-
-  return segment
-    .trim()
+  const translated = translateCommonChinese(segment)
     .replace(/\bwith\b/gi, "")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+
+  if (/username/i.test(translated) && /password/i.test(translated) && /validation/i.test(translated)) {
+    return "validate username and password";
+  }
+
+  return translated;
 }
 
 function translateCommonChinese(value: string): string {
@@ -301,28 +367,28 @@ function translateCommonChinese(value: string): string {
     .replace(/登录/gu, "login")
     .replace(/用户名/gu, "username")
     .replace(/密码/gu, "password")
-    .replace(/校验/gu, "validation")
+    .replace(/验证码/gu, "otp code")
+    .replace(/邮箱/gu, "email")
+    .replace(/手机号/gu, "phone")
+    .replace(/校验|验证/gu, "validation")
+    .replace(/约束|限制/gu, "constraints")
+    .replace(/输出/gu, "output")
+    .replace(/输入/gu, "input")
+    .replace(/功能/gu, "features")
+    .replace(/组件/gu, "component")
+    .replace(/插件/gu, "plugin")
+    .replace(/接口/gu, "api")
+    .replace(/页面/gu, "page")
+    .replace(/表单/gu, "form")
+    .replace(/表格/gu, "table")
+    .replace(/列表/gu, "list")
+    .replace(/搜索/gu, "search")
+    .replace(/筛选/gu, "filter")
     .replace(/带/gu, "with ")
+    .replace(/支持/gu, "support")
+    .replace(/响应式/gu, "responsive")
+    .replace(/轻量/gu, "lightweight")
+    .replace(/本地处理/gu, "local processing")
     .replace(/\s+/g, " ")
     .trim();
 }
-
-const COMMON_SKIP_WORDS = new Set([
-  "a",
-  "an",
-  "the",
-  "and",
-  "or",
-  "for",
-  "of",
-  "page",
-  "screen",
-  "with",
-  "without",
-  "validation",
-  "create",
-  "build",
-  "write",
-  "make",
-  "generate"
-]);

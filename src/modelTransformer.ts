@@ -1,5 +1,6 @@
 import { buildRemoteHeaders, buildRemotePrompt, getPromptOptimizerConfig } from "./config";
 import { formatPrompt } from "./modelAdapters";
+import { normalizeOptimizedPrompt } from "./normalizer";
 import { parsePrompt } from "./promptProcessor";
 import { TargetModel } from "./types";
 
@@ -59,7 +60,7 @@ async function optimizeWithRemoteModel(text: string, targetModel: TargetModel): 
       throw new Error("Remote model returned an empty response.");
     }
 
-    return result;
+    return normalizeOptimizedPrompt(text, result, targetModel);
   } finally {
     clearTimeout(timeoutHandle);
   }
