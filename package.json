@@ -1,0 +1,105 @@
+{
+  "name": "token-saving-plugin",
+  "displayName": "Prompt Optimizer",
+  "description": "Optimize natural language prompts into lightweight model-specific formats for ChatGPT, Cursor, and Codex.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:promptOptimizer.run"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "promptOptimizer.run",
+        "title": "Optimize Prompt"
+      }
+    ],
+    "configuration": {
+      "title": "Prompt Optimizer",
+      "properties": {
+        "promptOptimizer.transformationEngine": {
+          "type": "string",
+          "enum": [
+            "local",
+            "remote"
+          ],
+          "default": "local",
+          "description": "Choose whether to optimize prompts with local rules or a configured model endpoint."
+        },
+        "promptOptimizer.outputLanguage": {
+          "type": "string",
+          "enum": [
+            "english",
+            "source"
+          ],
+          "default": "english",
+          "description": "Prefer English output or preserve the user's original language."
+        },
+        "promptOptimizer.remote.provider": {
+          "type": "string",
+          "enum": [
+            "ollama",
+            "openai-compatible"
+          ],
+          "default": "ollama",
+          "description": "Remote provider type. Ollama works well for local free models; openai-compatible works with compatible hosted APIs."
+        },
+        "promptOptimizer.remote.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434/v1",
+          "description": "Base URL for the remote model endpoint. Example for Ollama: http://127.0.0.1:11434/v1"
+        },
+        "promptOptimizer.remote.apiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "API key for openai-compatible providers. Leave empty for local Ollama."
+        },
+        "promptOptimizer.remote.model": {
+          "type": "string",
+          "default": "qwen2.5:3b-instruct",
+          "description": "Remote model name. Use any available free or local model name supported by your provider."
+        },
+        "promptOptimizer.remote.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Sampling temperature for remote model optimization."
+        },
+        "promptOptimizer.remote.timeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "description": "Timeout in milliseconds for remote model requests."
+        },
+        "promptOptimizer.remote.systemPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Optional custom system prompt for the remote model."
+        },
+        "promptOptimizer.remote.fallbackToLocal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Fall back to local rule-based optimization if the remote request fails."
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "smoke-test": "node ./scripts/smoke-test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.11",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.8.2"
+  }
+}
