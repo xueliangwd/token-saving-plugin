@@ -1,5 +1,5 @@
 export type TargetModel = "chatgpt" | "cursor" | "codex" | "claude" | "gemini" | "deepseek";
-export type OutputMode = "replace" | "copy" | "both";
+export type OutputMode = "replace" | "newEditor" | "copy" | "both";
 
 export interface ParsedPrompt {
   task: string;

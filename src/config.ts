@@ -16,6 +16,11 @@ export interface PromptOptimizerConfig {
   remoteSystemPrompt: string;
   fallbackToLocal: boolean;
   outputLanguage: OutputLanguage;
+  defaultTargetModel: TargetModel;
+  clipboardAutoPasteToActiveEditor: boolean;
+  cursorChatOpenAfterCopy: boolean;
+  selectionAutoOptimizeEnabled: boolean;
+  selectionAutoOptimizeDebounceMs: number;
 }
 
 export function getPromptOptimizerConfig(): PromptOptimizerConfig {
@@ -31,7 +36,12 @@ export function getPromptOptimizerConfig(): PromptOptimizerConfig {
     remoteTimeoutMs: Math.max(config.get<number>("remote.timeoutMs", 30000), 1000),
     remoteSystemPrompt: config.get<string>("remote.systemPrompt", "").trim(),
     fallbackToLocal: config.get<boolean>("remote.fallbackToLocal", true),
-    outputLanguage: config.get<OutputLanguage>("outputLanguage", "english")
+    outputLanguage: config.get<OutputLanguage>("outputLanguage", "english"),
+    defaultTargetModel: config.get<TargetModel>("defaultTargetModel", "cursor"),
+    clipboardAutoPasteToActiveEditor: config.get<boolean>("clipboard.autoPasteToActiveEditor", true),
+    cursorChatOpenAfterCopy: config.get<boolean>("cursorChat.openAfterCopy", true),
+    selectionAutoOptimizeEnabled: config.get<boolean>("selectionAutoOptimize.enabled", false),
+    selectionAutoOptimizeDebounceMs: Math.max(config.get<number>("selectionAutoOptimize.debounceMs", 600), 150)
   };
 }
 

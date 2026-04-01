@@ -13,7 +13,10 @@
   ],
   "activationEvents": [
     "onCommand:promptOptimizer.run",
-    "onCommand:promptOptimizer.setupWizard"
+    "onCommand:promptOptimizer.setupWizard",
+    "onCommand:promptOptimizer.sendToNewEditor",
+    "onCommand:promptOptimizer.optimizeClipboardPaste",
+    "onCommand:promptOptimizer.sendToCursorChat"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -25,6 +28,18 @@
       {
         "command": "promptOptimizer.setupWizard",
         "title": "Prompt Optimizer: Setup Wizard"
+      },
+      {
+        "command": "promptOptimizer.sendToNewEditor",
+        "title": "Prompt Optimizer: Send To New Editor"
+      },
+      {
+        "command": "promptOptimizer.optimizeClipboardPaste",
+        "title": "Prompt Optimizer: Optimize Clipboard And Paste"
+      },
+      {
+        "command": "promptOptimizer.sendToCursorChat",
+        "title": "Prompt Optimizer: Send To Cursor Chat"
       }
     ],
     "menus": {
@@ -33,6 +48,16 @@
           "command": "promptOptimizer.run",
           "when": "editorTextFocus",
           "group": "navigation@10"
+        },
+        {
+          "command": "promptOptimizer.sendToNewEditor",
+          "when": "editorTextFocus",
+          "group": "navigation@11"
+        },
+        {
+          "command": "promptOptimizer.sendToCursorChat",
+          "when": "editorTextFocus",
+          "group": "navigation@12"
         }
       ],
       "commandPalette": [
@@ -41,6 +66,15 @@
         },
         {
           "command": "promptOptimizer.setupWizard"
+        },
+        {
+          "command": "promptOptimizer.sendToNewEditor"
+        },
+        {
+          "command": "promptOptimizer.optimizeClipboardPaste"
+        },
+        {
+          "command": "promptOptimizer.sendToCursorChat"
         }
       ]
     },
@@ -49,11 +83,34 @@
         "command": "promptOptimizer.run",
         "key": "ctrl+alt+p",
         "mac": "cmd+alt+p"
+      },
+      {
+        "command": "promptOptimizer.sendToNewEditor",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o"
+      },
+      {
+        "command": "promptOptimizer.sendToCursorChat",
+        "key": "ctrl+alt+l",
+        "mac": "cmd+alt+l"
       }
     ],
     "configuration": {
       "title": "Prompt Optimizer",
       "properties": {
+        "promptOptimizer.defaultTargetModel": {
+          "type": "string",
+          "enum": [
+            "chatgpt",
+            "cursor",
+            "codex",
+            "claude",
+            "gemini",
+            "deepseek"
+          ],
+          "default": "cursor",
+          "description": "Default target model for quick actions like clipboard paste, send to new editor, and auto optimization."
+        },
         "promptOptimizer.transformationEngine": {
           "type": "string",
           "enum": [
@@ -118,6 +175,27 @@
           "type": "boolean",
           "default": true,
           "description": "Fall back to local rule-based optimization if the remote request fails."
+        },
+        "promptOptimizer.clipboard.autoPasteToActiveEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "When optimizing clipboard content, paste the optimized result into the active editor if one is focused."
+        },
+        "promptOptimizer.cursorChat.openAfterCopy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try to focus an available chat panel after copying an optimized Cursor-style prompt."
+        },
+        "promptOptimizer.selectionAutoOptimize.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically optimize selected text after a short delay."
+        },
+        "promptOptimizer.selectionAutoOptimize.debounceMs": {
+          "type": "number",
+          "default": 600,
+          "minimum": 150,
+          "description": "Delay before auto-optimizing a selection."
         }
       }
     }

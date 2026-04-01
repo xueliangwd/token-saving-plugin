@@ -26,11 +26,35 @@ Supported targets:
 
 - Command palette: `Optimize Prompt`
 - Command palette: `Prompt Optimizer: Setup Wizard`
+- Command palette: `Prompt Optimizer: Send To New Editor`
+- Command palette: `Prompt Optimizer: Optimize Clipboard And Paste`
+- Command palette: `Prompt Optimizer: Send To Cursor Chat`
 - Editor right-click menu
 - Status bar entry: `Prompt Optimizer`
 - Shortcut:
   - macOS: `cmd+alt+p`
   - Windows/Linux: `ctrl+alt+p`
+  - New editor: `cmd+alt+o` / `ctrl+alt+o`
+  - Cursor chat workflow: `cmd+alt+l` / `ctrl+alt+l`
+
+## Cursor usage
+
+This extension works on editor text, not by directly rewriting what you type inside the Cursor chat input box.
+
+Use it in Cursor like this:
+
+1. Put your raw prompt in a normal editor tab, or copy it to the clipboard.
+2. Trigger one of these commands:
+   - `Optimize Prompt`: choose model and output mode
+   - `Prompt Optimizer: Send To New Editor`: optimize and open result in a new tab
+   - `Prompt Optimizer: Optimize Clipboard And Paste`: optimize clipboard text and paste into the active editor
+   - `Prompt Optimizer: Send To Cursor Chat`: optimize as Cursor format, copy it, and try to focus chat
+3. If chat focus does not open automatically in your Cursor build, paste the copied result into Cursor Chat or Composer manually.
+
+For automatic selection replacement, enable:
+
+- `promptOptimizer.selectionAutoOptimize.enabled`
+- `promptOptimizer.selectionAutoOptimize.debounceMs`
 
 ## Configurable transformation
 
@@ -40,6 +64,7 @@ Key settings:
 
 - `promptOptimizer.transformationEngine`: `local` or `remote`
 - `promptOptimizer.outputLanguage`: `english` or `source`
+- `promptOptimizer.defaultTargetModel`
 - `promptOptimizer.remote.provider`: `ollama` or `openai-compatible`
 - `promptOptimizer.remote.baseUrl`: endpoint base URL
 - `promptOptimizer.remote.apiKey`: API key for hosted providers
@@ -48,6 +73,10 @@ Key settings:
 - `promptOptimizer.remote.timeoutMs`
 - `promptOptimizer.remote.systemPrompt`
 - `promptOptimizer.remote.fallbackToLocal`
+- `promptOptimizer.clipboard.autoPasteToActiveEditor`
+- `promptOptimizer.cursorChat.openAfterCopy`
+- `promptOptimizer.selectionAutoOptimize.enabled`
+- `promptOptimizer.selectionAutoOptimize.debounceMs`
 
 Recommended free usage patterns:
 
