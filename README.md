@@ -30,13 +30,16 @@ Supported targets:
 - Command palette: `Prompt Optimizer: Optimize Clipboard And Paste`
 - Command palette: `Prompt Optimizer: Send To Cursor Chat`
 - Command palette: `Prompt Optimizer: Quick Cursor Replace`
+- Command palette: `Prompt Optimizer: Status Bar Models`
 - Command palette: `Prompt Optimizer: Quick Fill ChatGPT`
 - Command palette: `Prompt Optimizer: Quick Fill Claude`
 - Command palette: `Prompt Optimizer: Quick Fill Gemini`
 - Command palette: `Prompt Optimizer: Quick Fill Codex`
 - Command palette: `Prompt Optimizer: Quick Fill DeepSeek`
 - Editor right-click menu
-- Status bar entry: `Prompt Optimizer`
+- Status bar entries:
+  - `Prompt 优化`
+  - model dropdown like `ChatGPT / Cursor / Claude / Gemini`
 - Shortcut:
   - macOS: `cmd+alt+p`
   - Windows/Linux: `ctrl+alt+p`
@@ -54,6 +57,19 @@ Quick actions:
 - `Try Cursor Replace`
 - `Open README`
 
+## Lightweight paste hints
+
+After copy-based actions, the extension shows a lightweight hint that tells you:
+
+- the prompt is ready
+- whether it was auto-pasted
+- whether you should paste it into the target AI input box
+
+The hint also gives quick actions:
+
+- `Open New Editor / 打开新编辑器`
+- `Setup Wizard / 设置向导`
+
 You can disable this with:
 
 - `promptOptimizer.onboarding.showOnStartup`
@@ -67,6 +83,7 @@ Use it in Cursor like this:
 1. Put your raw prompt in a normal editor tab, or copy it to the clipboard.
 2. Trigger one of these commands:
    - `Optimize Prompt`: choose model and output mode
+   - click the model dropdown in the status bar: quickly choose `ChatGPT / Cursor / Claude / Gemini`
    - `Prompt Optimizer: Send To New Editor`: optimize and open result in a new tab
    - `Prompt Optimizer: Optimize Clipboard And Paste`: optimize clipboard text and paste into the active editor
    - `Prompt Optimizer: Send To Cursor Chat`: optimize as Cursor format, copy it, and try to focus chat

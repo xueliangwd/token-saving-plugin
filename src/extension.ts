@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { getPromptOptimizerConfig } from "./config";
+import { getModelIcon, getModelLabel, t } from "./i18n";
 import { optimizePrompt } from "./modelTransformer";
 import { OutputMode, SourcePayload, TargetModel } from "./types";
 
@@ -30,11 +31,14 @@ const CURSOR_CHAT_COMMAND_CANDIDATES = [
 ];
 
 const ONBOARDING_KEY = "promptOptimizer.onboardingShown";
+const RECENT_MODELS_KEY = "promptOptimizer.recentModels";
 
 let autoOptimizeTimer: NodeJS.Timeout | undefined;
 let suppressSelectionEventsUntil = 0;
 let lastAutoOptimizeSignature = "";
 let currentExtensionUri: vscode.Uri | undefined;
+let primaryStatusBarItem: vscode.StatusBarItem | undefined;
+let modelStatusBarItem: vscode.StatusBarItem | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   currentExtensionUri = context.extensionUri;
@@ -73,17 +77,27 @@ export function activate(context: vscode.ExtensionContext): void {
     await optimizeSelectionDirectly("cursor");
   });
 
+  const statusModelCommand = vscode.commands.registerCommand("promptOptimizer.statusBarModels", async () => {
+    await runStatusBarModelPicker();
+  });
+
   const quickFillCommands = QUICK_FILL_MODELS.map((model) =>
     vscode.commands.registerCommand(`promptOptimizer.quickFill.${model}`, async () => {
       await quickFillTargetModel(model);
     })
   );
 
-  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBarItem.text = "$(sparkle) Prompt Optimizer";
-  statusBarItem.tooltip = "Optimize prompt";
-  statusBarItem.command = "promptOptimizer.run";
-  statusBarItem.show();
+  primaryStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  primaryStatusBarItem.text = t("status.primary");
+  primaryStatusBarItem.tooltip = t("status.primaryTooltip");
+  primaryStatusBarItem.command = "promptOptimizer.run";
+  primaryStatusBarItem.show();
+
+  modelStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
+  modelStatusBarItem.text = `$(chevron-down) ${getModelIcon(getPromptOptimizerConfig().defaultTargetModel)} ${getModelLabel(getPromptOptimizerConfig().defaultTargetModel)}`;
+  modelStatusBarItem.tooltip = t("status.modelsTooltip");
+  modelStatusBarItem.command = "promptOptimizer.statusBarModels";
+  modelStatusBarItem.show();
 
   const selectionListener = vscode.window.onDidChangeTextEditorSelection(async (event) => {
     await maybeAutoOptimizeSelection(event);
@@ -98,8 +112,10 @@ export function activate(context: vscode.ExtensionContext): void {
     clipboardCommand,
     cursorChatCommand,
     cursorReplaceCommand,
+    statusModelCommand,
     ...quickFillCommands,
-    statusBarItem,
+    primaryStatusBarItem,
+    modelStatusBarItem,
     selectionListener
   );
 }
@@ -118,32 +134,65 @@ async function maybeShowOnboarding(context: vscode.ExtensionContext): Promise<vo
   await context.globalState.update(ONBOARDING_KEY, true);
 
   const choice = await vscode.window.showInformationMessage(
-    "Prompt Optimizer is ready. You can optimize selected text, send results to a new editor, or copy them into Cursor Chat.",
-    "Setup Wizard",
-    "Try Cursor Replace",
-    "Open README"
+    t("onboarding.message"),
+    t("onboarding.setup"),
+    t("onboarding.tryCursor"),
+    t("onboarding.readme")
   );
 
-  if (choice === "Setup Wizard") {
+  if (choice === t("onboarding.setup")) {
     await runSetupWizard();
     return;
   }
 
-  if (choice === "Try Cursor Replace") {
+  if (choice === t("onboarding.tryCursor")) {
     await optimizeSelectionDirectly("cursor");
     return;
   }
 
-  if (choice === "Open README") {
+  if (choice === t("onboarding.readme")) {
     await openReadme();
   }
+}
+
+async function runStatusBarModelPicker(): Promise<void> {
+  const config = getPromptOptimizerConfig();
+  const recentModels = getRecentModels();
+  const sortedModels = sortModelsByRecency(config.defaultTargetModel, recentModels);
+  const picked = await vscode.window.showQuickPick(
+    sortedModels.map((item) => ({
+      label: `${getModelIcon(item.model)} ${getModelLabel(item.model)}`,
+      description: item.model === config.defaultTargetModel ? t("picker.default") : t("picker.quickFill"),
+      model: item.model
+    })),
+    {
+      placeHolder: t("picker.statusModelPlaceholder")
+    }
+  );
+
+  if (!picked) {
+    return;
+  }
+
+  await vscode.workspace
+    .getConfiguration("promptOptimizer")
+    .update("defaultTargetModel", picked.model, vscode.ConfigurationTarget.Global);
+  updateStatusBarModelLabel(picked.model);
+  pushRecentModel(picked.model);
+
+  if (picked.model === "cursor") {
+    await optimizeSelectionDirectly("cursor");
+    return;
+  }
+
+  await quickFillTargetModel(picked.model);
 }
 
 async function optimizeFromEditorOrInput(targetModel: TargetModel, mode: OutputMode): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   const source = await getSource(editor);
   if (!source) {
-    vscode.window.showWarningMessage("No prompt text found. Select text, open a file, or enter text when prompted.");
+    vscode.window.showWarningMessage(t("warning.noPrompt"));
     return;
   }
 
@@ -154,24 +203,26 @@ async function optimizeFromEditorOrInput(targetModel: TargetModel, mode: OutputM
 
   await outputResult(editor, source, result, mode);
   showCompletionMessage(targetModel);
+  updateStatusBarModelLabel(targetModel);
+  pushRecentModel(targetModel);
 }
 
 async function optimizeSelectionDirectly(targetModel: TargetModel): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showWarningMessage("Open a file and select prompt text first.");
+    vscode.window.showWarningMessage(t("warning.openFileAndSelect"));
     return;
   }
 
   const selection = editor.selection;
   if (selection.isEmpty) {
-    vscode.window.showWarningMessage("Select prompt text to optimize directly.");
+    vscode.window.showWarningMessage(t("warning.selectPrompt"));
     return;
   }
 
   const text = editor.document.getText(selection).trim();
   if (!text) {
-    vscode.window.showWarningMessage("Selected text is empty.");
+    vscode.window.showWarningMessage(t("warning.selectionEmpty"));
     return;
   }
 
@@ -186,6 +237,8 @@ async function optimizeSelectionDirectly(targetModel: TargetModel): Promise<void
   });
 
   showCompletionMessage(targetModel, "editor");
+  updateStatusBarModelLabel(targetModel);
+  pushRecentModel(targetModel);
 }
 
 async function quickFillTargetModel(targetModel: TargetModel): Promise<void> {
@@ -194,7 +247,7 @@ async function quickFillTargetModel(targetModel: TargetModel): Promise<void> {
     promptForMissingInput: false
   });
   if (!source) {
-    vscode.window.showWarningMessage("No source text found in selection, editor, or clipboard.");
+    vscode.window.showWarningMessage(t("warning.noSourceAnywhere"));
     return;
   }
 
@@ -207,7 +260,10 @@ async function quickFillTargetModel(targetModel: TargetModel): Promise<void> {
 
   if (vscode.window.activeTextEditor && getPromptOptimizerConfig().clipboardAutoPasteToActiveEditor) {
     await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    showPasteHint(targetModel, "已自动粘贴到当前编辑器");
     showCompletionMessage(targetModel, "active editor");
+    updateStatusBarModelLabel(targetModel);
+    pushRecentModel(targetModel);
     return;
   }
 
@@ -221,14 +277,17 @@ async function quickFillTargetModel(targetModel: TargetModel): Promise<void> {
       result
     ].join("\n")
   );
+  showPasteHint(targetModel, "已复制到剪贴板，可粘贴到目标 AI 输入框");
   showCompletionMessage(targetModel, "clipboard");
+  updateStatusBarModelLabel(targetModel);
+  pushRecentModel(targetModel);
 }
 
 async function optimizeClipboardAndPaste(): Promise<void> {
   const config = getPromptOptimizerConfig();
   const clipboardText = (await vscode.env.clipboard.readText()).trim();
   if (!clipboardText) {
-    vscode.window.showWarningMessage("Clipboard is empty.");
+    vscode.window.showWarningMessage(t("warning.clipboardEmpty"));
     return;
   }
 
@@ -241,18 +300,22 @@ async function optimizeClipboardAndPaste(): Promise<void> {
 
   if (config.clipboardAutoPasteToActiveEditor && vscode.window.activeTextEditor) {
     await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    showPasteHint(config.defaultTargetModel, "已自动粘贴优化结果");
   } else {
     await openInNewEditor(result);
+    showPasteHint(config.defaultTargetModel, "已复制优化结果，请粘贴到目标输入框");
   }
 
   showCompletionMessage(config.defaultTargetModel, "clipboard");
+  updateStatusBarModelLabel(config.defaultTargetModel);
+  pushRecentModel(config.defaultTargetModel);
 }
 
 async function optimizeForCursorChat(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   const source = await getSource(editor, { preferClipboardFallback: true, promptForMissingInput: false });
   if (!source) {
-    vscode.window.showWarningMessage("No source text found in selection, editor, or clipboard.");
+    vscode.window.showWarningMessage(t("warning.noSourceAnywhere"));
     return;
   }
 
@@ -277,9 +340,14 @@ async function optimizeForCursorChat(): Promise<void> {
         result
       ].join("\n")
     );
+    showPasteHint("cursor", "已复制 Cursor 风格提示词，请粘贴到 Cursor Chat");
+  } else {
+    showPasteHint("cursor", "已复制 Cursor 风格提示词，可直接粘贴到聊天框");
   }
 
   showCompletionMessage("cursor", openedChat ? "cursor chat" : "clipboard");
+  updateStatusBarModelLabel("cursor");
+  pushRecentModel("cursor");
 }
 
 async function maybeAutoOptimizeSelection(event: vscode.TextEditorSelectionChangeEvent): Promise<void> {
@@ -330,7 +398,8 @@ async function maybeAutoOptimizeSelection(event: vscode.TextEditorSelectionChang
       await editor.edit((editBuilder) => {
         editBuilder.replace(selection, result);
       });
-      vscode.window.setStatusBarMessage("Prompt Optimizer: selection auto-optimized", 1800);
+      vscode.window.setStatusBarMessage(t("message.autoOptimized"), 1800);
+      updateStatusBarModelLabel(currentConfig.defaultTargetModel);
     } catch {
       // Keep auto mode quiet on failure.
     }
@@ -454,12 +523,12 @@ async function getSource(
 async function pickTargetModel(): Promise<TargetModel | undefined> {
   const pickedModel = await vscode.window.showQuickPick(
     MODEL_ITEMS.map((item) => ({
-      label: item.label,
-      description: `Optimize prompt for ${item.label}`,
+      label: `${getModelIcon(item.model)} ${getModelLabel(item.model)}`,
+      description: `Optimize prompt for ${getModelLabel(item.model)}`,
       model: item.model
     })),
     {
-      placeHolder: "Select target model"
+      placeHolder: t("picker.modelPlaceholder")
     }
   );
 
@@ -473,7 +542,7 @@ async function pickOutputMode(): Promise<OutputMode | undefined> {
       mode: item.mode
     })),
     {
-      placeHolder: "Choose how to output the optimized prompt"
+      placeHolder: t("picker.outputPlaceholder")
     }
   );
 
@@ -487,8 +556,72 @@ function showCompletionMessage(targetModel: TargetModel, destination?: string): 
   vscode.window.showInformationMessage(`Prompt optimized for ${getModelLabel(targetModel)}${suffix} using ${engineLabel}.`);
 }
 
-function getModelLabel(targetModel: TargetModel): string {
-  return MODEL_ITEMS.find((item) => item.model === targetModel)?.label ?? targetModel;
+function showPasteHint(targetModel: TargetModel, detail: string): void {
+  void vscode.window.showInformationMessage(
+    `${getModelLabel(targetModel)} 已准备好，${detail}`,
+    t("hint.openNewEditor"),
+    t("hint.setupWizard")
+  ).then(async (choice) => {
+    if (choice === t("hint.openNewEditor")) {
+      const clipboardText = await vscode.env.clipboard.readText();
+      if (clipboardText.trim()) {
+        await openInNewEditor(clipboardText);
+      }
+    }
+    if (choice === t("hint.setupWizard")) {
+      await runSetupWizard();
+    }
+  });
+}
+
+function updateStatusBarModelLabel(targetModel: TargetModel): void {
+  if (!modelStatusBarItem) {
+    return;
+  }
+
+  modelStatusBarItem.text = `$(chevron-down) ${getModelIcon(targetModel)} ${getModelLabel(targetModel)}`;
+}
+
+function getRecentModels(): TargetModel[] {
+  const raw = vscode.workspace.getConfiguration("promptOptimizer").get<string[]>("_recentModelsShadow", []);
+  return raw.filter((item): item is TargetModel => MODEL_ITEMS.some((model) => model.model === item));
+}
+
+function pushRecentModel(targetModel: TargetModel): void {
+  const raw = getRecentModels().filter((item) => item !== targetModel);
+  const next = [targetModel, ...raw].slice(0, 4);
+  void vscode.workspace
+    .getConfiguration("promptOptimizer")
+    .update("_recentModelsShadow", next, vscode.ConfigurationTarget.Global);
+}
+
+function sortModelsByRecency(defaultTargetModel: TargetModel, recentModels: TargetModel[]): Array<{ label: string; model: TargetModel }> {
+  const rank = new Map<TargetModel, number>();
+  recentModels.forEach((model, index) => rank.set(model, index));
+
+  return [...MODEL_ITEMS].sort((left, right) => {
+    const leftRank = rank.get(left.model);
+    const rightRank = rank.get(right.model);
+
+    if (leftRank !== undefined || rightRank !== undefined) {
+      if (leftRank === undefined) {
+        return 1;
+      }
+      if (rightRank === undefined) {
+        return -1;
+      }
+      return leftRank - rightRank;
+    }
+
+    if (left.model === defaultTargetModel) {
+      return -1;
+    }
+    if (right.model === defaultTargetModel) {
+      return 1;
+    }
+
+    return left.label.localeCompare(right.label);
+  });
 }
 
 async function focusCursorChat(): Promise<boolean> {
@@ -508,18 +641,18 @@ async function runSetupWizard(): Promise<void> {
   const provider = await vscode.window.showQuickPick(
     [
       {
-        label: "Ollama",
+        label: "Ollama / 本地免费模型",
         description: "Use a local free model through Ollama",
         value: "ollama"
       },
       {
-        label: "OpenAI-Compatible",
+        label: "OpenAI-Compatible / 兼容接口",
         description: "Use any compatible hosted endpoint",
         value: "openai-compatible"
       }
     ],
     {
-      placeHolder: "Select the provider to configure"
+      placeHolder: "Select the provider to configure / 选择模型接口"
     }
   );
 
@@ -533,7 +666,7 @@ async function runSetupWizard(): Promise<void> {
 
   if (provider.value === "ollama") {
     const baseUrl = await vscode.window.showInputBox({
-      prompt: "Ollama base URL",
+      prompt: "Ollama base URL / 地址",
       value: configuration.get<string>("remote.baseUrl", "http://127.0.0.1:11434/v1"),
       ignoreFocusOut: true
     });
@@ -542,7 +675,7 @@ async function runSetupWizard(): Promise<void> {
     }
 
     const model = await vscode.window.showInputBox({
-      prompt: "Ollama model name",
+      prompt: "Ollama model name / 模型名",
       value: configuration.get<string>("remote.model", "qwen2.5:3b-instruct"),
       ignoreFocusOut: true
     });
@@ -555,7 +688,7 @@ async function runSetupWizard(): Promise<void> {
     await configuration.update("remote.apiKey", "", vscode.ConfigurationTarget.Global);
   } else {
     const baseUrl = await vscode.window.showInputBox({
-      prompt: "Compatible API base URL",
+      prompt: "Compatible API base URL / 接口地址",
       value: configuration.get<string>("remote.baseUrl", ""),
       ignoreFocusOut: true
     });
@@ -564,7 +697,7 @@ async function runSetupWizard(): Promise<void> {
     }
 
     const model = await vscode.window.showInputBox({
-      prompt: "Model name",
+      prompt: "Model name / 模型名",
       value: configuration.get<string>("remote.model", ""),
       ignoreFocusOut: true
     });
@@ -573,7 +706,7 @@ async function runSetupWizard(): Promise<void> {
     }
 
     const apiKey = await vscode.window.showInputBox({
-      prompt: "API key",
+      prompt: "API key / 密钥",
       value: configuration.get<string>("remote.apiKey", ""),
       password: true,
       ignoreFocusOut: true
@@ -589,11 +722,11 @@ async function runSetupWizard(): Promise<void> {
 
   const outputLanguage = await vscode.window.showQuickPick(
     [
-      { label: "English", value: "english" },
-      { label: "Keep source language", value: "source" }
+      { label: "English / 英文输出", value: "english" },
+      { label: "Keep source language / 保持原语言", value: "source" }
     ],
     {
-      placeHolder: "Select the preferred output language"
+      placeHolder: "Select preferred output language / 选择输出语言"
     }
   );
 

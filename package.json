@@ -18,6 +18,7 @@
     "onCommand:promptOptimizer.optimizeClipboardPaste",
     "onCommand:promptOptimizer.sendToCursorChat",
     "onCommand:promptOptimizer.quickCursorReplace",
+    "onCommand:promptOptimizer.statusBarModels",
     "onCommand:promptOptimizer.quickFill.chatgpt",
     "onCommand:promptOptimizer.quickFill.codex",
     "onCommand:promptOptimizer.quickFill.claude",
@@ -29,47 +30,51 @@
     "commands": [
       {
         "command": "promptOptimizer.run",
-        "title": "Optimize Prompt"
+        "title": "Optimize Prompt / 优化提示词"
       },
       {
         "command": "promptOptimizer.setupWizard",
-        "title": "Prompt Optimizer: Setup Wizard"
+        "title": "Prompt Optimizer: Setup Wizard / 设置向导"
       },
       {
         "command": "promptOptimizer.sendToNewEditor",
-        "title": "Prompt Optimizer: Send To New Editor"
+        "title": "Prompt Optimizer: Send To New Editor / 发送到新编辑器"
       },
       {
         "command": "promptOptimizer.optimizeClipboardPaste",
-        "title": "Prompt Optimizer: Optimize Clipboard And Paste"
+        "title": "Prompt Optimizer: Optimize Clipboard And Paste / 优化剪贴板并粘贴"
       },
       {
         "command": "promptOptimizer.sendToCursorChat",
-        "title": "Prompt Optimizer: Send To Cursor Chat"
+        "title": "Prompt Optimizer: Send To Cursor Chat / 发送到 Cursor Chat"
       },
       {
         "command": "promptOptimizer.quickCursorReplace",
-        "title": "Prompt Optimizer: Quick Cursor Replace"
+        "title": "Prompt Optimizer: Quick Cursor Replace / 一键替换为 Cursor 风格"
+      },
+      {
+        "command": "promptOptimizer.statusBarModels",
+        "title": "Prompt Optimizer: Status Bar Models / 状态栏模型菜单"
       },
       {
         "command": "promptOptimizer.quickFill.chatgpt",
-        "title": "Prompt Optimizer: Quick Fill ChatGPT"
+        "title": "Prompt Optimizer: Quick Fill ChatGPT / 快速填充 ChatGPT"
       },
       {
         "command": "promptOptimizer.quickFill.codex",
-        "title": "Prompt Optimizer: Quick Fill Codex"
+        "title": "Prompt Optimizer: Quick Fill Codex / 快速填充 Codex"
       },
       {
         "command": "promptOptimizer.quickFill.claude",
-        "title": "Prompt Optimizer: Quick Fill Claude"
+        "title": "Prompt Optimizer: Quick Fill Claude / 快速填充 Claude"
       },
       {
         "command": "promptOptimizer.quickFill.gemini",
-        "title": "Prompt Optimizer: Quick Fill Gemini"
+        "title": "Prompt Optimizer: Quick Fill Gemini / 快速填充 Gemini"
       },
       {
         "command": "promptOptimizer.quickFill.deepseek",
-        "title": "Prompt Optimizer: Quick Fill DeepSeek"
+        "title": "Prompt Optimizer: Quick Fill DeepSeek / 快速填充 DeepSeek"
       }
     ],
     "menus": {
@@ -284,6 +289,15 @@
           "type": "boolean",
           "default": true,
           "description": "Show a first-run onboarding message with quick actions after installation."
+        },
+        "promptOptimizer._recentModelsShadow": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Internal setting used to store recently used models for the status bar menu.",
+          "scope": "machine-overridable"
         }
       }
     }
