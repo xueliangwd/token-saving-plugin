@@ -27,7 +27,9 @@ export function applyCommonRules(parsed: ParsedPrompt, config: CommonRulesConfig
 
   return {
     ...parsed,
-    constraints: dedupeItems([...parsed.constraints, ...commonRules])
+    input: dedupeItems(parsed.input),
+    constraints: dedupeItems(parsed.constraints),
+    output: dedupeItems(parsed.output)
   };
 }
 

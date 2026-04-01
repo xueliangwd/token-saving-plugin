@@ -90,6 +90,21 @@ assert.ok(normalized.includes("CONSTRAINTS:"));
 
   assert.ok(optimized.optimizedPrompt.includes("mcp"));
   assert.ok(optimized.appliedCommonRules.includes("keep wording implementation-ready"));
+  assert.ok(!optimized.optimizedPrompt.includes("keep the prompt compact and remove filler"));
+
+  const mcpListInput = [
+    "能否增加一种 mcp 的方式",
+    "- cursor",
+    "- mcp",
+    "- ide",
+    "- input",
+    "- output: implementation"
+  ].join("\n");
+  const parsedMcpList = parsePrompt(mcpListInput);
+  assert.equal(parsedMcpList.task, "能否增加一种 mcp 的方式");
+  assert.deepEqual(parsedMcpList.input, ["cursor", "mcp", "ide", "input"]);
+  assert.deepEqual(parsedMcpList.output, ["implementation"]);
+  assert.equal(parsedMcpList.constraints.length, 0);
 
   const snippet = buildMcpConfigSnippet("cursor", "/tmp/token-saving-plugin/dist/mcpServer.js");
   assert.ok(snippet.includes("\"mcpServers\""));

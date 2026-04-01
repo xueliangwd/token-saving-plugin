@@ -439,6 +439,7 @@
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "smoke-test": "node ./scripts/smoke-test.js",
+    "unit-test": "node ./scripts/unit-test.js",
     "package-vsix": "node ./scripts/package-vsix.js"
   },
   "devDependencies": {

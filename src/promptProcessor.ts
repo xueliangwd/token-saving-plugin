@@ -54,7 +54,6 @@ const CONSTRAINT_KEYWORDS = [
   "auto send",
   "preview",
   "dialog",
-  "mcp",
   "intercept"
 ];
 
@@ -100,8 +99,8 @@ const TASK_HINTS: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /(vscode|vs code|cursor).*(extension|插件)|(extension|插件).*(vscode|vs code|cursor)/iu, value: "build vscode extension" },
   { pattern: /(mcp).*(server|bridge|链路|拦截|转发)|(拦截|转发).*(mcp)/iu, value: "build prompt optimization mcp bridge" },
   { pattern: /(prompt|提示词).*(optimize|optimizer|优化)|(optimize|optimizer|优化).*(prompt|提示词)/iu, value: "optimize prompt" },
-  { pattern: /(api|接口).*(design|设计|build|实现)/iu, value: "design API" },
-  { pattern: /(component|组件).*(build|实现|create)/iu, value: "build component" }
+  { pattern: /接口.*(design|设计|build|实现)|(design|设计|build|实现).*接口|\bdesign api\b|\bbuild api\b/iu, value: "design API" },
+  { pattern: /(component|组件).*(build|实现|create)|(build|实现|create).*(component|组件)/iu, value: "build component" }
 ];
 
 const COMMON_SKIP_WORDS = new Set([
@@ -136,15 +135,16 @@ const COMMON_SKIP_WORDS = new Set([
 
 export function parsePrompt(text: string): ParsedPrompt {
   const cleanedText = normalizeWhitespace(stripFillers(text));
+  const lines = cleanedText.split("\n").map((line) => line.trim()).filter(Boolean);
   const rawSegments = splitSegments(cleanedText);
   const explicitItems = extractExplicitItems(cleanedText);
-  const task = extractTask(cleanedText, rawSegments);
+  const task = extractTask(cleanedText, rawSegments, lines);
   const constraints = dedupeItems([
     ...extractConstraints(rawSegments),
     ...explicitItems.constraints
   ]);
   const input = dedupeItems([
-    ...extractInputs(cleanedText, rawSegments, task, constraints),
+    ...extractInputs(cleanedText, rawSegments, lines),
     ...explicitItems.input
   ]).slice(0, 10);
   const output = dedupeItems([
@@ -170,12 +170,17 @@ function normalizeWhitespace(text: string): string {
 
 function splitSegments(text: string): string[] {
   return text
-    .split(/[\n,.!?;:，。！？；：]/u)
+    .split(/[\n,.!?，。！？]/u)
     .map((segment) => segment.trim())
     .filter(Boolean);
 }
 
-function extractTask(text: string, segments: string[]): string {
+function extractTask(text: string, segments: string[], lines: string[]): string {
+  const preferredLine = lines.find((line) => isTaskCandidate(line)) ?? lines[0];
+  if (preferredLine && shouldPreferLiteralTaskLine(preferredLine)) {
+    return normalizeTask(preferredLine);
+  }
+
   for (const hint of TASK_HINTS) {
     if (hint.pattern.test(text)) {
       return hint.value;
@@ -187,7 +192,7 @@ function extractTask(text: string, segments: string[]): string {
     return explicitTask;
   }
 
-  const firstSegment = segments[0] ?? text;
+  const firstSegment = preferredLine ?? segments[0] ?? text;
   return normalizeTask(firstSegment || "handle the request");
 }
 
@@ -204,6 +209,7 @@ function extractTaskFromChinese(text: string): string | undefined {
 
 function normalizeTask(segment: string): string {
   let value = translateCommonChinese(segment.trim());
+  value = value.replace(/^(task|goal)\s*[:：]\s*/i, "");
   value = value.replace(/^(to\s+)/i, "");
   value = value.replace(/^(write|create|build|generate|make|implement|design)\b/i, (match) => match.toLowerCase());
   value = value.replace(/\bneed(s)?\s+to\b/gi, "");
@@ -262,7 +268,7 @@ function extractConstraints(segments: string[]): string[] {
       values.add("intercept source prompt before downstream send");
     }
 
-    if (/mcp/iu.test(segment)) {
+    if (/mcp/iu.test(segment) && /(support|workflow|server|bridge|chain|cursor|ide|intercept|preview|send|拦截|转发|链路|预览|发送)/iu.test(segment)) {
       values.add("support MCP workflow");
     }
 
@@ -285,27 +291,43 @@ function extractConstraints(segments: string[]): string[] {
 function extractInputs(
   text: string,
   segments: string[],
-  task: string,
-  constraints: string[]
+  lines: string[]
 ): string[] {
   const values = new Set<string>();
-  const taskWords = new Set(task.toLowerCase().split(/\s+/));
-  const constraintWords = new Set(constraints.flatMap((item) => item.toLowerCase().split(/[\s-]+/)));
 
   for (const knownField of inferKnownFields(text)) {
     values.add(knownField);
   }
 
-  for (const segment of segments) {
-    const translated = translateCommonChinese(segment);
-    const englishBits = translated.match(/\b[a-zA-Z][a-zA-Z0-9+._-]*\b/g) ?? [];
-    for (const bit of englishBits) {
-      const lower = bit.toLowerCase();
-      if (taskWords.has(lower) || constraintWords.has(lower) || COMMON_SKIP_WORDS.has(lower)) {
-        continue;
-      }
-      values.add(lower);
+  for (const line of lines) {
+    const bulletValue = toBulletValue(line);
+    if (!bulletValue || isExplicitSectionLine(line)) {
+      continue;
     }
+
+    const normalized = translateCommonChinese(bulletValue).trim().toLowerCase();
+    if (!normalized || COMMON_SKIP_WORDS.has(normalized)) {
+      continue;
+    }
+
+    values.add(normalized);
+  }
+
+  for (const segment of segments) {
+    if (hasExplicitSectionLabel(segment)) {
+      continue;
+    }
+
+    const translated = translateCommonChinese(segment).trim().toLowerCase();
+    if (!translated || translated.includes(" ")) {
+      continue;
+    }
+
+    if (COMMON_SKIP_WORDS.has(translated) || isSectionKeyword(translated)) {
+      continue;
+    }
+
+    values.add(translated);
   }
 
   return Array.from(values).slice(0, 8);
@@ -362,10 +384,25 @@ function extractExplicitItems(text: string): {
       if (section.type === "input") {
         result.input.push(...items);
       } else if (section.type === "constraint") {
-        result.constraints.push(...items);
+        result.constraints.push(...items.map((item) => normalizeExplicitConstraint(item)));
       } else {
         result.output.push(...items);
       }
+    }
+  }
+
+  for (const line of text.split("\n")) {
+    const explicitLine = parseExplicitLine(line);
+    if (!explicitLine) {
+      continue;
+    }
+
+    if (explicitLine.type === "input") {
+      result.input.push(...explicitLine.items);
+    } else if (explicitLine.type === "constraint") {
+      result.constraints.push(...explicitLine.items.map((item) => normalizeExplicitConstraint(item)));
+    } else {
+      result.output.push(...explicitLine.items);
     }
   }
 
@@ -383,12 +420,71 @@ function splitList(value: string): string[] {
     .filter(Boolean);
 }
 
+function parseExplicitLine(line: string): { type: "input" | "constraint" | "output"; items: string[] } | undefined {
+  const normalizedLine = line.replace(/^[-*]\s*/, "").trim();
+  for (const section of EXPLICIT_SECTION_PATTERNS) {
+    const pattern = new RegExp(`^${section.label}\\s*[:：]\\s*(.+)$`, "iu");
+    const match = normalizedLine.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    return {
+      type: section.type,
+      items: splitList(match[1] ?? "")
+    };
+  }
+
+  return undefined;
+}
+
 function dedupeItems(items: string[]): string[] {
   return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
 }
 
+function toBulletValue(line: string): string | undefined {
+  const match = line.match(/^[-*]\s+(.+)$/);
+  return match?.[1]?.trim();
+}
+
+function isTaskCandidate(line: string): boolean {
+  if (isExplicitSectionLine(line)) {
+    return false;
+  }
+
+  return !line.startsWith("-") && !line.startsWith("*");
+}
+
+function shouldPreferLiteralTaskLine(line: string): boolean {
+  return /[a-z]/i.test(line) && !/[\u4e00-\u9fff]/u.test(line) && !containsExplicitSectionLabel(line);
+}
+
+function isExplicitSectionLine(line: string): boolean {
+  return parseExplicitLine(line) !== undefined;
+}
+
+function hasExplicitSectionLabel(segment: string): boolean {
+  return EXPLICIT_SECTION_PATTERNS.some((section) => {
+    const pattern = new RegExp(`^${section.label}\\s*[:：]`, "iu");
+    return pattern.test(segment.trim());
+  });
+}
+
+function isSectionKeyword(value: string): boolean {
+  return EXPLICIT_SECTION_PATTERNS.some((section) => section.label === value);
+}
+
+function containsExplicitSectionLabel(value: string): boolean {
+  return EXPLICIT_SECTION_PATTERNS.some((section) => {
+    const pattern = new RegExp(`(^|\\s)${section.label}\\s*[:：]`, "iu");
+    return pattern.test(value);
+  });
+}
+
 function toEnglishConstraint(segment: string): string {
   const translated = translateCommonChinese(segment)
+    .replace(/^[-*]\s*/g, "")
+    .replace(/^(requirements?|constraints?|constraint|rules?|validation|要求|约束|限制|规则)\s*[:：]\s*/giu, "")
     .replace(/\bwith\b/gi, "")
     .replace(/\s+/g, " ")
     .trim()
@@ -399,6 +495,27 @@ function toEnglishConstraint(segment: string): string {
   }
 
   return translated;
+}
+
+function normalizeExplicitConstraint(item: string): string {
+  const normalized = toEnglishConstraint(item);
+  if (/non[- ]?empty/i.test(normalized)) {
+    return "non-empty validation";
+  }
+
+  if (/responsive/i.test(normalized)) {
+    return "responsive layout";
+  }
+
+  if (/lightweight/i.test(normalized)) {
+    return "lightweight implementation";
+  }
+
+  if (/local processing|local/i.test(normalized)) {
+    return "local processing only";
+  }
+
+  return normalized;
 }
 
 function translateCommonChinese(value: string): string {

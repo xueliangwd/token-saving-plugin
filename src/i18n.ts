@@ -133,7 +133,7 @@ export function t(key: Key, vars?: Record<string, string>): string {
   const locale = getLocale();
   const template = TEXT[locale][key];
   return Object.entries(vars ?? {}).reduce(
-    (value, [name, replacement]) => value.replaceAll(`{${name}}`, replacement),
+    (value, [name, replacement]) => value.split(`{${name}}`).join(replacement),
     template
   );
 }
