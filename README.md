@@ -29,6 +29,12 @@ Supported targets:
 - Command palette: `Prompt Optimizer: Send To New Editor`
 - Command palette: `Prompt Optimizer: Optimize Clipboard And Paste`
 - Command palette: `Prompt Optimizer: Send To Cursor Chat`
+- Command palette: `Prompt Optimizer: Quick Cursor Replace`
+- Command palette: `Prompt Optimizer: Quick Fill ChatGPT`
+- Command palette: `Prompt Optimizer: Quick Fill Claude`
+- Command palette: `Prompt Optimizer: Quick Fill Gemini`
+- Command palette: `Prompt Optimizer: Quick Fill Codex`
+- Command palette: `Prompt Optimizer: Quick Fill DeepSeek`
 - Editor right-click menu
 - Status bar entry: `Prompt Optimizer`
 - Shortcut:
@@ -36,6 +42,21 @@ Supported targets:
   - Windows/Linux: `ctrl+alt+p`
   - New editor: `cmd+alt+o` / `ctrl+alt+o`
   - Cursor chat workflow: `cmd+alt+l` / `ctrl+alt+l`
+  - Direct Cursor replace: `cmd+alt+r` / `ctrl+alt+r`
+
+## First-run onboarding
+
+After installation, the extension shows a first-run guide once.
+
+Quick actions:
+
+- `Setup Wizard`
+- `Try Cursor Replace`
+- `Open README`
+
+You can disable this with:
+
+- `promptOptimizer.onboarding.showOnStartup`
 
 ## Cursor usage
 
@@ -49,6 +70,8 @@ Use it in Cursor like this:
    - `Prompt Optimizer: Send To New Editor`: optimize and open result in a new tab
    - `Prompt Optimizer: Optimize Clipboard And Paste`: optimize clipboard text and paste into the active editor
    - `Prompt Optimizer: Send To Cursor Chat`: optimize as Cursor format, copy it, and try to focus chat
+   - `Prompt Optimizer: Quick Cursor Replace`: directly replace the current selection with Cursor format
+   - `Prompt Optimizer: Quick Fill ChatGPT / Claude / Gemini / Codex / DeepSeek`: optimize, copy, and paste into the active editor when possible
 3. If chat focus does not open automatically in your Cursor build, paste the copied result into Cursor Chat or Composer manually.
 
 For automatic selection replacement, enable:
@@ -77,6 +100,7 @@ Key settings:
 - `promptOptimizer.cursorChat.openAfterCopy`
 - `promptOptimizer.selectionAutoOptimize.enabled`
 - `promptOptimizer.selectionAutoOptimize.debounceMs`
+- `promptOptimizer.onboarding.showOnStartup`
 
 Recommended free usage patterns:
 

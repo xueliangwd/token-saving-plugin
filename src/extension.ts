@@ -12,6 +12,8 @@ const MODEL_ITEMS: Array<{ label: string; model: TargetModel }> = [
   { label: "DeepSeek", model: "deepseek" }
 ];
 
+const QUICK_FILL_MODELS: TargetModel[] = ["chatgpt", "codex", "claude", "gemini", "deepseek"];
+
 const OUTPUT_MODE_ITEMS: Array<{ label: string; mode: OutputMode }> = [
   { label: "Replace in editor", mode: "replace" },
   { label: "Open in new editor", mode: "newEditor" },
@@ -27,11 +29,15 @@ const CURSOR_CHAT_COMMAND_CANDIDATES = [
   "workbench.panel.chat.view.copilot.focus"
 ];
 
+const ONBOARDING_KEY = "promptOptimizer.onboardingShown";
+
 let autoOptimizeTimer: NodeJS.Timeout | undefined;
 let suppressSelectionEventsUntil = 0;
 let lastAutoOptimizeSignature = "";
+let currentExtensionUri: vscode.Uri | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
+  currentExtensionUri = context.extensionUri;
   const runCommand = vscode.commands.registerCommand("promptOptimizer.run", async () => {
     const model = await pickTargetModel();
     if (!model) {
@@ -63,6 +69,16 @@ export function activate(context: vscode.ExtensionContext): void {
     await optimizeForCursorChat();
   });
 
+  const cursorReplaceCommand = vscode.commands.registerCommand("promptOptimizer.quickCursorReplace", async () => {
+    await optimizeSelectionDirectly("cursor");
+  });
+
+  const quickFillCommands = QUICK_FILL_MODELS.map((model) =>
+    vscode.commands.registerCommand(`promptOptimizer.quickFill.${model}`, async () => {
+      await quickFillTargetModel(model);
+    })
+  );
+
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.text = "$(sparkle) Prompt Optimizer";
   statusBarItem.tooltip = "Optimize prompt";
@@ -73,15 +89,54 @@ export function activate(context: vscode.ExtensionContext): void {
     await maybeAutoOptimizeSelection(event);
   });
 
+  void maybeShowOnboarding(context);
+
   context.subscriptions.push(
     runCommand,
     setupCommand,
     newEditorCommand,
     clipboardCommand,
     cursorChatCommand,
+    cursorReplaceCommand,
+    ...quickFillCommands,
     statusBarItem,
     selectionListener
   );
+}
+
+async function maybeShowOnboarding(context: vscode.ExtensionContext): Promise<void> {
+  const config = getPromptOptimizerConfig();
+  if (!config.onboardingShowOnStartup) {
+    return;
+  }
+
+  const alreadyShown = context.globalState.get<boolean>(ONBOARDING_KEY, false);
+  if (alreadyShown) {
+    return;
+  }
+
+  await context.globalState.update(ONBOARDING_KEY, true);
+
+  const choice = await vscode.window.showInformationMessage(
+    "Prompt Optimizer is ready. You can optimize selected text, send results to a new editor, or copy them into Cursor Chat.",
+    "Setup Wizard",
+    "Try Cursor Replace",
+    "Open README"
+  );
+
+  if (choice === "Setup Wizard") {
+    await runSetupWizard();
+    return;
+  }
+
+  if (choice === "Try Cursor Replace") {
+    await optimizeSelectionDirectly("cursor");
+    return;
+  }
+
+  if (choice === "Open README") {
+    await openReadme();
+  }
 }
 
 async function optimizeFromEditorOrInput(targetModel: TargetModel, mode: OutputMode): Promise<void> {
@@ -99,6 +154,74 @@ async function optimizeFromEditorOrInput(targetModel: TargetModel, mode: OutputM
 
   await outputResult(editor, source, result, mode);
   showCompletionMessage(targetModel);
+}
+
+async function optimizeSelectionDirectly(targetModel: TargetModel): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showWarningMessage("Open a file and select prompt text first.");
+    return;
+  }
+
+  const selection = editor.selection;
+  if (selection.isEmpty) {
+    vscode.window.showWarningMessage("Select prompt text to optimize directly.");
+    return;
+  }
+
+  const text = editor.document.getText(selection).trim();
+  if (!text) {
+    vscode.window.showWarningMessage("Selected text is empty.");
+    return;
+  }
+
+  const result = await safelyOptimize(text, targetModel);
+  if (!result) {
+    return;
+  }
+
+  suppressSelectionEventsUntil = Date.now() + 1500;
+  await editor.edit((editBuilder) => {
+    editBuilder.replace(selection, result);
+  });
+
+  showCompletionMessage(targetModel, "editor");
+}
+
+async function quickFillTargetModel(targetModel: TargetModel): Promise<void> {
+  const source = await getSource(vscode.window.activeTextEditor, {
+    preferClipboardFallback: true,
+    promptForMissingInput: false
+  });
+  if (!source) {
+    vscode.window.showWarningMessage("No source text found in selection, editor, or clipboard.");
+    return;
+  }
+
+  const result = await safelyOptimize(source.text, targetModel);
+  if (!result) {
+    return;
+  }
+
+  await vscode.env.clipboard.writeText(result);
+
+  if (vscode.window.activeTextEditor && getPromptOptimizerConfig().clipboardAutoPasteToActiveEditor) {
+    await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    showCompletionMessage(targetModel, "active editor");
+    return;
+  }
+
+  await openInNewEditor(
+    [
+      `# ${getModelLabel(targetModel)} Prompt`,
+      "",
+      "The optimized prompt is copied to your clipboard.",
+      "Paste it into the target AI input box when ready.",
+      "",
+      result
+    ].join("\n")
+  );
+  showCompletionMessage(targetModel, "clipboard");
 }
 
 async function optimizeClipboardAndPaste(): Promise<void> {
@@ -119,7 +242,7 @@ async function optimizeClipboardAndPaste(): Promise<void> {
   if (config.clipboardAutoPasteToActiveEditor && vscode.window.activeTextEditor) {
     await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
   } else {
-    await openInNewEditor(result, "Optimized Clipboard Prompt");
+    await openInNewEditor(result);
   }
 
   showCompletionMessage(config.defaultTargetModel, "clipboard");
@@ -152,8 +275,7 @@ async function optimizeForCursorChat(): Promise<void> {
         "Paste it into Cursor Chat or Composer to continue.",
         "",
         result
-      ].join("\n"),
-      "Cursor Chat Prompt"
+      ].join("\n")
     );
   }
 
@@ -232,7 +354,7 @@ async function outputResult(
   mode: OutputMode
 ): Promise<void> {
   if (mode === "newEditor") {
-    await openInNewEditor(result, "Optimized Prompt");
+    await openInNewEditor(result);
     return;
   }
 
@@ -245,7 +367,7 @@ async function outputResult(
       editBuilder.replace(range, result);
     });
   } else if (mode === "replace") {
-    await openInNewEditor(result, "Optimized Prompt");
+    await openInNewEditor(result);
   }
 
   if (mode === "copy" || mode === "both") {
@@ -253,7 +375,7 @@ async function outputResult(
   }
 }
 
-async function openInNewEditor(content: string, title: string): Promise<void> {
+async function openInNewEditor(content: string): Promise<void> {
   const document = await vscode.workspace.openTextDocument({
     content,
     language: "markdown"
@@ -261,7 +383,24 @@ async function openInNewEditor(content: string, title: string): Promise<void> {
   await vscode.window.showTextDocument(document, {
     preview: false
   });
-  void title;
+}
+
+async function openReadme(): Promise<void> {
+  const baseUri =
+    currentExtensionUri ??
+    vscode.extensions.all.find((extension) => extension.packageJSON?.name === "token-saving-plugin")?.extensionUri;
+
+  if (!baseUri) {
+    return;
+  }
+
+  const readmeUri = vscode.Uri.joinPath(baseUri, "README.md");
+  try {
+    const document = await vscode.workspace.openTextDocument(readmeUri);
+    await vscode.window.showTextDocument(document, { preview: false });
+  } catch {
+    // Ignore if README cannot be resolved in a packaged extension context.
+  }
 }
 
 async function getSource(
@@ -345,7 +484,11 @@ function showCompletionMessage(targetModel: TargetModel, destination?: string): 
   const config = getPromptOptimizerConfig();
   const engineLabel = config.transformationEngine === "remote" ? `remote model: ${config.remoteModel}` : "local rules";
   const suffix = destination ? ` to ${destination}` : "";
-  vscode.window.showInformationMessage(`Prompt optimized for ${targetModel}${suffix} using ${engineLabel}.`);
+  vscode.window.showInformationMessage(`Prompt optimized for ${getModelLabel(targetModel)}${suffix} using ${engineLabel}.`);
+}
+
+function getModelLabel(targetModel: TargetModel): string {
+  return MODEL_ITEMS.find((item) => item.model === targetModel)?.label ?? targetModel;
 }
 
 async function focusCursorChat(): Promise<boolean> {

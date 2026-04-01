@@ -21,6 +21,7 @@ export interface PromptOptimizerConfig {
   cursorChatOpenAfterCopy: boolean;
   selectionAutoOptimizeEnabled: boolean;
   selectionAutoOptimizeDebounceMs: number;
+  onboardingShowOnStartup: boolean;
 }
 
 export function getPromptOptimizerConfig(): PromptOptimizerConfig {
@@ -41,7 +42,8 @@ export function getPromptOptimizerConfig(): PromptOptimizerConfig {
     clipboardAutoPasteToActiveEditor: config.get<boolean>("clipboard.autoPasteToActiveEditor", true),
     cursorChatOpenAfterCopy: config.get<boolean>("cursorChat.openAfterCopy", true),
     selectionAutoOptimizeEnabled: config.get<boolean>("selectionAutoOptimize.enabled", false),
-    selectionAutoOptimizeDebounceMs: Math.max(config.get<number>("selectionAutoOptimize.debounceMs", 600), 150)
+    selectionAutoOptimizeDebounceMs: Math.max(config.get<number>("selectionAutoOptimize.debounceMs", 600), 150),
+    onboardingShowOnStartup: config.get<boolean>("onboarding.showOnStartup", true)
   };
 }
 

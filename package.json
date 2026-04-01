@@ -16,7 +16,13 @@
     "onCommand:promptOptimizer.setupWizard",
     "onCommand:promptOptimizer.sendToNewEditor",
     "onCommand:promptOptimizer.optimizeClipboardPaste",
-    "onCommand:promptOptimizer.sendToCursorChat"
+    "onCommand:promptOptimizer.sendToCursorChat",
+    "onCommand:promptOptimizer.quickCursorReplace",
+    "onCommand:promptOptimizer.quickFill.chatgpt",
+    "onCommand:promptOptimizer.quickFill.codex",
+    "onCommand:promptOptimizer.quickFill.claude",
+    "onCommand:promptOptimizer.quickFill.gemini",
+    "onCommand:promptOptimizer.quickFill.deepseek"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -40,6 +46,30 @@
       {
         "command": "promptOptimizer.sendToCursorChat",
         "title": "Prompt Optimizer: Send To Cursor Chat"
+      },
+      {
+        "command": "promptOptimizer.quickCursorReplace",
+        "title": "Prompt Optimizer: Quick Cursor Replace"
+      },
+      {
+        "command": "promptOptimizer.quickFill.chatgpt",
+        "title": "Prompt Optimizer: Quick Fill ChatGPT"
+      },
+      {
+        "command": "promptOptimizer.quickFill.codex",
+        "title": "Prompt Optimizer: Quick Fill Codex"
+      },
+      {
+        "command": "promptOptimizer.quickFill.claude",
+        "title": "Prompt Optimizer: Quick Fill Claude"
+      },
+      {
+        "command": "promptOptimizer.quickFill.gemini",
+        "title": "Prompt Optimizer: Quick Fill Gemini"
+      },
+      {
+        "command": "promptOptimizer.quickFill.deepseek",
+        "title": "Prompt Optimizer: Quick Fill DeepSeek"
       }
     ],
     "menus": {
@@ -58,6 +88,36 @@
           "command": "promptOptimizer.sendToCursorChat",
           "when": "editorTextFocus",
           "group": "navigation@12"
+        },
+        {
+          "command": "promptOptimizer.quickCursorReplace",
+          "when": "editorHasSelection",
+          "group": "navigation@13"
+        },
+        {
+          "command": "promptOptimizer.quickFill.chatgpt",
+          "when": "editorTextFocus",
+          "group": "navigation@14"
+        },
+        {
+          "command": "promptOptimizer.quickFill.claude",
+          "when": "editorTextFocus",
+          "group": "navigation@15"
+        },
+        {
+          "command": "promptOptimizer.quickFill.gemini",
+          "when": "editorTextFocus",
+          "group": "navigation@16"
+        },
+        {
+          "command": "promptOptimizer.quickFill.codex",
+          "when": "editorTextFocus",
+          "group": "navigation@17"
+        },
+        {
+          "command": "promptOptimizer.quickFill.deepseek",
+          "when": "editorTextFocus",
+          "group": "navigation@18"
         }
       ],
       "commandPalette": [
@@ -75,6 +135,24 @@
         },
         {
           "command": "promptOptimizer.sendToCursorChat"
+        },
+        {
+          "command": "promptOptimizer.quickCursorReplace"
+        },
+        {
+          "command": "promptOptimizer.quickFill.chatgpt"
+        },
+        {
+          "command": "promptOptimizer.quickFill.codex"
+        },
+        {
+          "command": "promptOptimizer.quickFill.claude"
+        },
+        {
+          "command": "promptOptimizer.quickFill.gemini"
+        },
+        {
+          "command": "promptOptimizer.quickFill.deepseek"
         }
       ]
     },
@@ -93,6 +171,11 @@
         "command": "promptOptimizer.sendToCursorChat",
         "key": "ctrl+alt+l",
         "mac": "cmd+alt+l"
+      },
+      {
+        "command": "promptOptimizer.quickCursorReplace",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r"
       }
     ],
     "configuration": {
@@ -196,6 +279,11 @@
           "default": 600,
           "minimum": 150,
           "description": "Delay before auto-optimizing a selection."
+        },
+        "promptOptimizer.onboarding.showOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a first-run onboarding message with quick actions after installation."
         }
       }
     }
