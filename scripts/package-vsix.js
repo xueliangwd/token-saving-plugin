@@ -20,6 +20,7 @@ copyIntoExtension("README.md");
 copyIntoExtension(".gitignore");
 copyIntoExtension(".vscode/launch.json");
 copyTree("dist");
+copyTree("media");
 
 writeFile(path.join(tempDir, "[Content_Types].xml"), buildContentTypesXml());
 writeFile(path.join(tempDir, "extension.vsixmanifest"), buildVsixManifest(packageJson));

@@ -4,6 +4,7 @@
   "description": "Optimize natural language prompts into lightweight model-specific formats for ChatGPT, Cursor, and Codex.",
   "version": "0.0.1",
   "publisher": "local",
+  "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.90.0"
   },

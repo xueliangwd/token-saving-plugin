@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="72" y1="52" x2="442" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="orb" x1="164" y1="116" x2="360" y2="330" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#BFDBFE"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="160" y1="182" x2="354" y2="182" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E0F2FE"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="36" y="36" width="440" height="440" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="226" r="112" fill="url(#orb)" fill-opacity="0.14"/>
+  <path d="M256 124C200.772 124 156 168.772 156 224V288C156 343.228 200.772 388 256 388C311.228 388 356 343.228 356 288V224C356 168.772 311.228 124 256 124Z" fill="url(#orb)"/>
+  <rect x="177" y="173" width="158" height="84" rx="24" fill="#F8FAFC"/>
+  <rect x="196" y="194" width="120" height="12" rx="6" fill="#0F172A" fill-opacity="0.15"/>
+  <rect x="196" y="217" width="78" height="12" rx="6" fill="#0F172A" fill-opacity="0.12"/>
+  <path d="M208 288C208 261.49 229.49 240 256 240C282.51 240 304 261.49 304 288V320C304 346.51 282.51 368 256 368C229.49 368 208 346.51 208 320V288Z" fill="#F8FAFC"/>
+  <path d="M229 296L248.5 315.5L285 279" stroke="#0F766E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <g opacity="0.92">
+    <circle cx="142" cy="152" r="18" fill="#67E8F9"/>
+    <circle cx="370" cy="146" r="14" fill="#A5B4FC"/>
+    <circle cx="388" cy="324" r="16" fill="#93C5FD"/>
+    <circle cx="132" cy="330" r="12" fill="#5EEAD4"/>
+  </g>
+  <g opacity="0.9" stroke="url(#chip)" stroke-width="10" stroke-linecap="round">
+    <path d="M120 220H92"/>
+    <path d="M420 220H392"/>
+    <path d="M120 280H86"/>
+    <path d="M426 280H392"/>
+    <path d="M220 100V72"/>
+    <path d="M292 100V72"/>
+    <path d="M220 440V412"/>
+    <path d="M292 440V412"/>
+  </g>
+</svg>
