@@ -7,7 +7,10 @@ const crypto = require("node:crypto");
 const childProcess = require("node:child_process");
 
 const rootDir = path.resolve(__dirname, "..");
-const packageJson = JSON.parse(fs.readFileSync(path.join(rootDir, "package.json"), "utf8"));
+const packageJsonPath = path.join(rootDir, "package.json");
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+packageJson.version = bumpPatchVersion(packageJson.version);
+fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
 const extensionName = `${packageJson.name}-${packageJson.version}.vsix`;
 const outputPath = path.join(rootDir, extensionName);
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "prompt-optimizer-vsix-"));
@@ -17,6 +20,7 @@ fs.mkdirSync(extensionDir, { recursive: true });
 
 copyIntoExtension("package.json");
 copyIntoExtension("package.nls.json");
+copyIntoExtension("package.nls.zh.json");
 copyIntoExtension("package.nls.zh-cn.json");
 copyIntoExtension("README.md");
 copyIntoExtension(".gitignore");
@@ -39,6 +43,11 @@ childProcess.execFileSync(
 
 fs.rmSync(tempDir, { recursive: true, force: true });
 console.log(`Created ${outputPath}`);
+
+function bumpPatchVersion(version) {
+  const [major, minor, patch] = version.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  return `${major}.${minor}.${patch + 1}`;
+}
 
 function copyIntoExtension(relativePath) {
   const source = path.join(rootDir, relativePath);

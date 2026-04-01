@@ -2,7 +2,7 @@
   "name": "token-saving-plugin",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "publisher": "local",
   "icon": "media/icon.png",
   "engines": {
@@ -30,51 +30,69 @@
     "commands": [
       {
         "command": "promptOptimizer.run",
-        "title": "%command.run.title%"
+        "title": "%command.run.title%",
+        "icon": "$(sparkle)"
       },
       {
         "command": "promptOptimizer.setupWizard",
-        "title": "%command.setupWizard.title%"
+        "title": "%command.setupWizard.title%",
+        "icon": "$(gear)"
       },
       {
         "command": "promptOptimizer.sendToNewEditor",
-        "title": "%command.sendToNewEditor.title%"
+        "title": "%command.sendToNewEditor.title%",
+        "icon": "$(go-to-file)"
       },
       {
         "command": "promptOptimizer.optimizeClipboardPaste",
-        "title": "%command.optimizeClipboardPaste.title%"
+        "title": "%command.optimizeClipboardPaste.title%",
+        "icon": "$(clippy)"
       },
       {
         "command": "promptOptimizer.sendToCursorChat",
-        "title": "%command.sendToCursorChat.title%"
+        "title": "%command.sendToCursorChat.title%",
+        "icon": "$(comment-discussion)"
       },
       {
         "command": "promptOptimizer.quickCursorReplace",
-        "title": "%command.quickCursorReplace.title%"
+        "title": "%command.quickCursorReplace.title%",
+        "icon": "$(replace-all)"
       },
       {
         "command": "promptOptimizer.statusBarModels",
-        "title": "%command.statusBarModels.title%"
+        "title": "%command.statusBarModels.title%",
+        "icon": "$(list-selection)"
       },
       {
         "command": "promptOptimizer.quickFill.chatgpt",
-        "title": "%command.quickFillChatgpt.title%"
+        "title": "%command.quickFillChatgpt.title%",
+        "icon": "$(comment-discussion)"
       },
       {
         "command": "promptOptimizer.quickFill.codex",
-        "title": "%command.quickFillCodex.title%"
+        "title": "%command.quickFillCodex.title%",
+        "icon": "$(code)"
       },
       {
         "command": "promptOptimizer.quickFill.claude",
-        "title": "%command.quickFillClaude.title%"
+        "title": "%command.quickFillClaude.title%",
+        "icon": "$(hubot)"
       },
       {
         "command": "promptOptimizer.quickFill.gemini",
-        "title": "%command.quickFillGemini.title%"
+        "title": "%command.quickFillGemini.title%",
+        "icon": "$(sparkle)"
       },
       {
         "command": "promptOptimizer.quickFill.deepseek",
-        "title": "%command.quickFillDeepseek.title%"
+        "title": "%command.quickFillDeepseek.title%",
+        "icon": "$(search-fuzzy)"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "promptOptimizer.modelsSubmenu",
+        "label": "%submenu.models.label%"
       }
     ],
     "menus": {
@@ -123,6 +141,49 @@
           "command": "promptOptimizer.quickFill.deepseek",
           "when": "editorTextFocus",
           "group": "navigation@18"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "promptOptimizer.run",
+          "when": "editorTextFocus",
+          "group": "navigation@90"
+        },
+        {
+          "command": "promptOptimizer.quickCursorReplace",
+          "when": "editorHasSelection",
+          "group": "navigation@91"
+        },
+        {
+          "submenu": "promptOptimizer.modelsSubmenu",
+          "when": "editorTextFocus",
+          "group": "navigation@92"
+        }
+      ],
+      "promptOptimizer.modelsSubmenu": [
+        {
+          "command": "promptOptimizer.quickFill.chatgpt",
+          "group": "inline@1"
+        },
+        {
+          "command": "promptOptimizer.quickFill.claude",
+          "group": "inline@2"
+        },
+        {
+          "command": "promptOptimizer.quickFill.gemini",
+          "group": "inline@3"
+        },
+        {
+          "command": "promptOptimizer.quickFill.codex",
+          "group": "inline@4"
+        },
+        {
+          "command": "promptOptimizer.quickFill.deepseek",
+          "group": "inline@5"
+        },
+        {
+          "command": "promptOptimizer.sendToCursorChat",
+          "group": "inline@6"
         }
       ],
       "commandPalette": [
@@ -289,15 +350,6 @@
           "type": "boolean",
           "default": true,
           "description": "%config.onboardingShowOnStartup.description%"
-        },
-        "promptOptimizer._recentModelsShadow": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "%config.recentModelsShadow.description%",
-          "scope": "machine-overridable"
         }
       }
     }

@@ -31,6 +31,7 @@ const CURSOR_CHAT_COMMAND_CANDIDATES = [
 ];
 
 const ONBOARDING_KEY = "promptOptimizer.onboardingShown";
+const UI_LANGUAGE_KEY = "promptOptimizer.lastUiLanguage";
 const RECENT_MODELS_KEY = "promptOptimizer.recentModels";
 
 let autoOptimizeTimer: NodeJS.Timeout | undefined;
@@ -39,9 +40,12 @@ let lastAutoOptimizeSignature = "";
 let currentExtensionUri: vscode.Uri | undefined;
 let primaryStatusBarItem: vscode.StatusBarItem | undefined;
 let modelStatusBarItem: vscode.StatusBarItem | undefined;
+let extensionContextRef: vscode.ExtensionContext | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   currentExtensionUri = context.extensionUri;
+  extensionContextRef = context;
+  void maybePromptForLanguageReload(context);
   const runCommand = vscode.commands.registerCommand("promptOptimizer.run", async () => {
     const model = await pickTargetModel();
     if (!model) {
@@ -118,6 +122,25 @@ export function activate(context: vscode.ExtensionContext): void {
     modelStatusBarItem,
     selectionListener
   );
+}
+
+async function maybePromptForLanguageReload(context: vscode.ExtensionContext): Promise<void> {
+  const previousLanguage = context.globalState.get<string>(UI_LANGUAGE_KEY);
+  const currentLanguage = vscode.env.language;
+  await context.globalState.update(UI_LANGUAGE_KEY, currentLanguage);
+
+  if (!previousLanguage || previousLanguage === currentLanguage) {
+    return;
+  }
+
+  const choice = await vscode.window.showInformationMessage(
+    t("languageChange.message"),
+    t("languageChange.reload")
+  );
+
+  if (choice === t("languageChange.reload")) {
+    await vscode.commands.executeCommand("workbench.action.reloadWindow");
+  }
 }
 
 async function maybeShowOnboarding(context: vscode.ExtensionContext): Promise<void> {
@@ -583,16 +606,14 @@ function updateStatusBarModelLabel(targetModel: TargetModel): void {
 }
 
 function getRecentModels(): TargetModel[] {
-  const raw = vscode.workspace.getConfiguration("promptOptimizer").get<string[]>("_recentModelsShadow", []);
+  const raw = extensionContextRef?.globalState.get<string[]>(RECENT_MODELS_KEY, []) ?? [];
   return raw.filter((item): item is TargetModel => MODEL_ITEMS.some((model) => model.model === item));
 }
 
 function pushRecentModel(targetModel: TargetModel): void {
   const raw = getRecentModels().filter((item) => item !== targetModel);
   const next = [targetModel, ...raw].slice(0, 4);
-  void vscode.workspace
-    .getConfiguration("promptOptimizer")
-    .update("_recentModelsShadow", next, vscode.ConfigurationTarget.Global);
+  void extensionContextRef?.globalState.update(RECENT_MODELS_KEY, next);
 }
 
 function sortModelsByRecency(defaultTargetModel: TargetModel, recentModels: TargetModel[]): Array<{ label: string; model: TargetModel }> {

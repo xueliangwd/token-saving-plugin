@@ -11,6 +11,8 @@ type Key =
   | "onboarding.setup"
   | "onboarding.tryCursor"
   | "onboarding.readme"
+  | "languageChange.message"
+  | "languageChange.reload"
   | "picker.modelPlaceholder"
   | "picker.outputPlaceholder"
   | "picker.statusModelPlaceholder"
@@ -41,6 +43,8 @@ const TEXT: Record<Locale, Record<Key, string>> = {
     "onboarding.setup": "设置向导",
     "onboarding.tryCursor": "试用 Cursor 替换",
     "onboarding.readme": "打开说明",
+    "languageChange.message": "检测到界面语言已切换。重载窗口后，命令标题和设置说明会更新为当前语言。",
+    "languageChange.reload": "立即重载",
     "picker.modelPlaceholder": "选择目标模型",
     "picker.outputPlaceholder": "选择输出方式",
     "picker.statusModelPlaceholder": "选择目标模型",
@@ -70,6 +74,8 @@ const TEXT: Record<Locale, Record<Key, string>> = {
     "onboarding.setup": "Setup Wizard",
     "onboarding.tryCursor": "Try Cursor Replace",
     "onboarding.readme": "Open README",
+    "languageChange.message": "The UI language changed. Reload the window to refresh command titles and settings descriptions.",
+    "languageChange.reload": "Reload Window",
     "picker.modelPlaceholder": "Select target model",
     "picker.outputPlaceholder": "Choose output mode",
     "picker.statusModelPlaceholder": "Select target model",

@@ -13,6 +13,7 @@
   "command.quickFillClaude.title": "Prompt Optimizer: Quick Fill Claude",
   "command.quickFillGemini.title": "Prompt Optimizer: Quick Fill Gemini",
   "command.quickFillDeepseek.title": "Prompt Optimizer: Quick Fill DeepSeek",
+  "submenu.models.label": "AI Models",
   "config.title": "Prompt Optimizer",
   "config.defaultTargetModel.description": "Default target model for quick actions like clipboard paste, send to new editor, and auto optimization.",
   "config.transformationEngine.description": "Choose whether to optimize prompts with local rules or a configured model endpoint.",
@@ -29,6 +30,5 @@
   "config.cursorChatOpenAfterCopy.description": "Try to focus an available chat panel after copying an optimized Cursor-style prompt.",
   "config.selectionAutoOptimizeEnabled.description": "Automatically optimize selected text after a short delay.",
   "config.selectionAutoOptimizeDebounce.description": "Delay before auto-optimizing a selection.",
-  "config.onboardingShowOnStartup.description": "Show a first-run onboarding message with quick actions after installation.",
-  "config.recentModelsShadow.description": "Internal setting used to store recently used models for the status bar menu."
+  "config.onboardingShowOnStartup.description": "Show a first-run onboarding message with quick actions after installation."
 }
