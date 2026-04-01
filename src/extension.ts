@@ -157,7 +157,7 @@ async function maybeShowOnboarding(context: vscode.ExtensionContext): Promise<vo
   await context.globalState.update(ONBOARDING_KEY, true);
 
   const choice = await vscode.window.showInformationMessage(
-    t("onboarding.message"),
+    `${t("onboarding.message")} ${t("visibility.help")}`,
     t("onboarding.setup"),
     t("onboarding.tryCursor"),
     t("onboarding.readme")

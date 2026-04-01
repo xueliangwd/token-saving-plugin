@@ -250,6 +250,15 @@ Package locally as a `.vsix`:
 npm run package-vsix
 ```
 
+If entry points are not visible after installation:
+
+1. Install the latest generated `.vsix`
+2. Run `Developer: Reload Window`
+3. Open Command Palette and search:
+   - `Optimize Prompt`
+   - `Prompt Optimizer`
+4. If the top toolbar buttons still do not show in your Cursor build, use the Command Palette or status bar entry first
+
 This repo already includes runnable files in `dist/`, so the command can be experienced without first installing TypeScript locally.
 
 Optional local smoke test:

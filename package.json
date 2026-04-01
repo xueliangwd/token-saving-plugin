@@ -2,7 +2,7 @@
   "name": "token-saving-plugin",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "local",
   "icon": "media/icon.png",
   "engines": {
@@ -32,7 +32,7 @@
       {
         "command": "promptOptimizer.run",
         "title": "%command.run.title%",
-        "icon": "$(sparkle)"
+        "icon": "$(wand)"
       },
       {
         "command": "promptOptimizer.setupWizard",
@@ -57,12 +57,12 @@
       {
         "command": "promptOptimizer.quickCursorReplace",
         "title": "%command.quickCursorReplace.title%",
-        "icon": "$(replace-all)"
+        "icon": "$(zap)"
       },
       {
         "command": "promptOptimizer.statusBarModels",
         "title": "%command.statusBarModels.title%",
-        "icon": "$(list-selection)"
+        "icon": "$(symbol-color)"
       },
       {
         "command": "promptOptimizer.quickFill.chatgpt",

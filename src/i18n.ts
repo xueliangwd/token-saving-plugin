@@ -32,7 +32,8 @@ type Key =
   | "source.cursorChat"
   | "source.clipboard"
   | "source.activeEditor"
-  | "source.editor";
+  | "source.editor"
+  | "visibility.help";
 
 const TEXT: Record<Locale, Record<Key, string>> = {
   zh: {
@@ -64,7 +65,8 @@ const TEXT: Record<Locale, Record<Key, string>> = {
     "source.cursorChat": "Cursor Chat",
     "source.clipboard": "剪贴板",
     "source.activeEditor": "当前编辑器",
-    "source.editor": "编辑器"
+    "source.editor": "编辑器",
+    "visibility.help": "如果看不到入口：请执行 Reload Window，并在命令面板搜索“优化提示词”。"
   },
   en: {
     "status.primary": "$(sparkle) Prompt Optimize",
@@ -95,7 +97,8 @@ const TEXT: Record<Locale, Record<Key, string>> = {
     "source.cursorChat": "Cursor Chat",
     "source.clipboard": "clipboard",
     "source.activeEditor": "active editor",
-    "source.editor": "editor"
+    "source.editor": "editor",
+    "visibility.help": "If you still do not see the entry points, reload the window and search for Optimize Prompt in the Command Palette."
   }
 };
 

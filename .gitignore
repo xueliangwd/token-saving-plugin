@@ -1,4 +1,2 @@
 dist/
 node_modules/
-*.vsix
-!token-saving-plugin-0.0.5.vsix
