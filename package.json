@@ -2,7 +2,7 @@
   "name": "token-saving-plugin",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "local",
   "icon": "media/icon.png",
   "engines": {
@@ -12,6 +12,7 @@
     "Other"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:promptOptimizer.run",
     "onCommand:promptOptimizer.setupWizard",
     "onCommand:promptOptimizer.sendToNewEditor",
@@ -219,6 +220,18 @@
         },
         {
           "command": "promptOptimizer.quickFill.deepseek"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "promptOptimizer.run",
+          "when": "editorTextFocus",
+          "group": "navigation@1"
+        },
+        {
+          "command": "promptOptimizer.quickCursorReplace",
+          "when": "editorHasSelection",
+          "group": "navigation@2"
         }
       ]
     },
