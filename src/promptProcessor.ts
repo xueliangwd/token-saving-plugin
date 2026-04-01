@@ -19,17 +19,22 @@ const EXPLICIT_SECTION_PATTERNS = [
   { label: "fields", type: "input" },
   { label: "inputs", type: "input" },
   { label: "input", type: "input" },
+  { label: "context", type: "input" },
   { label: "requirements", type: "constraint" },
   { label: "constraints", type: "constraint" },
   { label: "constraint", type: "constraint" },
+  { label: "rules", type: "constraint" },
   { label: "validation", type: "constraint" },
   { label: "output", type: "output" },
   { label: "result", type: "output" },
+  { label: "deliverable", type: "output" },
   { label: "功能", type: "input" },
   { label: "输入", type: "input" },
+  { label: "上下文", type: "input" },
   { label: "要求", type: "constraint" },
   { label: "约束", type: "constraint" },
   { label: "限制", type: "constraint" },
+  { label: "规则", type: "constraint" },
   { label: "输出", type: "output" }
 ] as const;
 
@@ -44,7 +49,13 @@ const CONSTRAINT_KEYWORDS = [
   "lightweight",
   "local",
   "only",
-  "must support"
+  "must support",
+  "manual",
+  "auto send",
+  "preview",
+  "dialog",
+  "mcp",
+  "intercept"
 ];
 
 const OUTPUT_HINTS: Array<{ pattern: RegExp; value: string }> = [
@@ -78,12 +89,16 @@ const KNOWN_FIELDS: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /codex/i, value: "codex" },
   { pattern: /claude/i, value: "claude" },
   { pattern: /gemini/i, value: "gemini" },
-  { pattern: /deepseek/i, value: "deepseek" }
+  { pattern: /deepseek/i, value: "deepseek" },
+  { pattern: /mcp/i, value: "mcp" },
+  { pattern: /ide/i, value: "ide" },
+  { pattern: /plugin|插件/i, value: "plugin" }
 ];
 
 const TASK_HINTS: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /flutter.*(登录页面|login page)|登录页面.*flutter/iu, value: "build flutter login page" },
   { pattern: /(vscode|vs code|cursor).*(extension|插件)|(extension|插件).*(vscode|vs code|cursor)/iu, value: "build vscode extension" },
+  { pattern: /(mcp).*(server|bridge|链路|拦截|转发)|(拦截|转发).*(mcp)/iu, value: "build prompt optimization mcp bridge" },
   { pattern: /(prompt|提示词).*(optimize|optimizer|优化)|(optimize|optimizer|优化).*(prompt|提示词)/iu, value: "optimize prompt" },
   { pattern: /(api|接口).*(design|设计|build|实现)/iu, value: "design API" },
   { pattern: /(component|组件).*(build|实现|create)/iu, value: "build component" }
@@ -111,7 +126,12 @@ const COMMON_SKIP_WORDS = new Set([
   "should",
   "must",
   "support",
-  "use"
+  "use",
+  "preview",
+  "dialog",
+  "manual",
+  "auto",
+  "send"
 ]);
 
 export function parsePrompt(text: string): ParsedPrompt {
@@ -224,6 +244,26 @@ function extractConstraints(segments: string[]): string[] {
 
     if (/响应式|responsive/u.test(segment)) {
       values.add("responsive layout");
+    }
+
+    if (/弹框|预览|preview|dialog/iu.test(segment)) {
+      values.add("show transformed prompt before sending");
+    }
+
+    if (/手动发送|manual send/iu.test(segment)) {
+      values.add("allow manual send after preview");
+    }
+
+    if (/自动发送|auto send/iu.test(segment)) {
+      values.add("support optional auto send");
+    }
+
+    if (/拦截|intercept/iu.test(segment) && /(输入|content|prompt|内容)/iu.test(segment)) {
+      values.add("intercept source prompt before downstream send");
+    }
+
+    if (/mcp/iu.test(segment)) {
+      values.add("support MCP workflow");
     }
 
     if (/本地处理|local/u.test(segment)) {

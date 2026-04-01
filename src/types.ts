@@ -1,5 +1,9 @@
 export type TargetModel = "chatgpt" | "cursor" | "codex" | "claude" | "gemini" | "deepseek";
 export type OutputMode = "replace" | "newEditor" | "copy" | "both";
+export type TransformationEngine = "local" | "remote";
+export type RemoteProvider = "ollama" | "openai-compatible";
+export type OutputLanguage = "english" | "source";
+export type McpClient = "cursor" | "cline" | "claude-desktop" | "generic";
 
 export interface ParsedPrompt {
   task: string;
@@ -14,4 +18,36 @@ export interface SourcePayload {
     start: { line: number; character: number };
     end: { line: number; character: number };
   };
+}
+
+export interface CommonRulesConfig {
+  enabled: boolean;
+  appendBuiltIn: boolean;
+  customRules: string[];
+}
+
+export interface RemoteConfig {
+  provider: RemoteProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  temperature: number;
+  timeoutMs: number;
+  systemPrompt: string;
+  fallbackToLocal: boolean;
+}
+
+export interface OptimizationSettings {
+  transformationEngine: TransformationEngine;
+  outputLanguage: OutputLanguage;
+  remote: RemoteConfig;
+  commonRules: CommonRulesConfig;
+}
+
+export interface OptimizationResult {
+  optimizedPrompt: string;
+  parsed: ParsedPrompt;
+  appliedCommonRules: string[];
+  engineUsed: TransformationEngine;
+  normalizedFromRemote: boolean;
 }

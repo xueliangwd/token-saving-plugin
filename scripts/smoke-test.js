@@ -4,6 +4,8 @@ const assert = require("node:assert/strict");
 const { parsePrompt } = require("../dist/promptProcessor");
 const { formatPrompt } = require("../dist/modelAdapters");
 const { normalizeOptimizedPrompt } = require("../dist/normalizer");
+const { optimizePromptWithSettings } = require("../dist/optimizerCore");
+const { buildMcpConfigSnippet } = require("../dist/mcpSupport");
 
 const chineseInput = "帮我写一个带用户名密码校验的 Flutter 登录页面";
 const parsedChinese = parsePrompt(chineseInput);
@@ -64,4 +66,37 @@ assert.ok(normalized.includes("TASK: build vscode extension"));
 assert.ok(normalized.includes("INPUT:"));
 assert.ok(normalized.includes("CONSTRAINTS:"));
 
-console.log("smoke-test passed");
+(async () => {
+  const mcpSource = "使用 mcp 拦截 cursor 输入内容，先优化，再预览后手动发送，支持自动发送配置";
+  const optimized = await optimizePromptWithSettings(mcpSource, "cursor", {
+    transformationEngine: "local",
+    outputLanguage: "english",
+    commonRules: {
+      enabled: true,
+      appendBuiltIn: true,
+      customRules: ["keep wording implementation-ready"]
+    },
+    remote: {
+      provider: "ollama",
+      baseUrl: "http://127.0.0.1:11434/v1",
+      apiKey: "",
+      model: "qwen2.5:3b-instruct",
+      temperature: 0.2,
+      timeoutMs: 30000,
+      systemPrompt: "",
+      fallbackToLocal: true
+    }
+  });
+
+  assert.ok(optimized.optimizedPrompt.includes("mcp"));
+  assert.ok(optimized.appliedCommonRules.includes("keep wording implementation-ready"));
+
+  const snippet = buildMcpConfigSnippet("cursor", "/tmp/token-saving-plugin/dist/mcpServer.js");
+  assert.ok(snippet.includes("\"mcpServers\""));
+  assert.ok(snippet.includes("mcpServer.js"));
+
+  console.log("smoke-test passed");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

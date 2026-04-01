@@ -8,6 +8,9 @@
   "command.sendToCursorChat.title": "提示词优化器：发送到 Cursor Chat",
   "command.quickCursorReplace.title": "提示词优化器：一键替换为 Cursor 风格",
   "command.statusBarModels.title": "提示词优化器：状态栏模型菜单",
+  "command.copyMcpConfig.title": "提示词优化器：复制 MCP 配置",
+  "command.openMcpGuide.title": "提示词优化器：打开 MCP 说明",
+  "command.mcpInterceptPreview.title": "提示词优化器：MCP 拦截预览",
   "command.quickFillChatgpt.title": "提示词优化器：快速填充 ChatGPT",
   "command.quickFillCodex.title": "提示词优化器：快速填充 Codex",
   "command.quickFillClaude.title": "提示词优化器：快速填充 Claude",
@@ -30,5 +33,11 @@
   "config.cursorChatOpenAfterCopy.description": "复制 Cursor 风格提示词后，尝试自动聚焦到可用的聊天面板。",
   "config.selectionAutoOptimizeEnabled.description": "在短暂延迟后自动优化选中的文本。",
   "config.selectionAutoOptimizeDebounce.description": "自动优化选中文本前的延迟时间。",
-  "config.onboardingShowOnStartup.description": "安装后首次启动时显示带快捷操作的引导提示。"
+  "config.onboardingShowOnStartup.description": "安装后首次启动时显示带快捷操作的引导提示。",
+  "config.commonRulesEnabled.description": "是否在生成后的提示词中追加可配置的通用优化规则。",
+  "config.commonRulesAppendBuiltIn.description": "是否追加内置通用优化建议。",
+  "config.commonRulesCustomRules.description": "追加到优化结果中的自定义通用规则列表。",
+  "config.mcpDefaultTargetModel.description": "MCP 拦截工作流默认使用的目标模型。",
+  "config.mcpPreviewBeforeSend.description": "MCP 拦截工作流中，是否先显示优化后的内容并等待手动发送。",
+  "config.mcpAutoSend.description": "MCP 拦截工作流中，是否允许优化后自动转发。"
 }

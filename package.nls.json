@@ -8,6 +8,9 @@
   "command.sendToCursorChat.title": "Prompt Optimizer: Send To Cursor Chat",
   "command.quickCursorReplace.title": "Prompt Optimizer: Quick Cursor Replace",
   "command.statusBarModels.title": "Prompt Optimizer: Status Bar Models",
+  "command.copyMcpConfig.title": "Prompt Optimizer: Copy MCP Config",
+  "command.openMcpGuide.title": "Prompt Optimizer: Open MCP Guide",
+  "command.mcpInterceptPreview.title": "Prompt Optimizer: MCP Intercept Preview",
   "command.quickFillChatgpt.title": "Prompt Optimizer: Quick Fill ChatGPT",
   "command.quickFillCodex.title": "Prompt Optimizer: Quick Fill Codex",
   "command.quickFillClaude.title": "Prompt Optimizer: Quick Fill Claude",
@@ -30,5 +33,11 @@
   "config.cursorChatOpenAfterCopy.description": "Try to focus an available chat panel after copying an optimized Cursor-style prompt.",
   "config.selectionAutoOptimizeEnabled.description": "Automatically optimize selected text after a short delay.",
   "config.selectionAutoOptimizeDebounce.description": "Delay before auto-optimizing a selection.",
-  "config.onboardingShowOnStartup.description": "Show a first-run onboarding message with quick actions after installation."
+  "config.onboardingShowOnStartup.description": "Show a first-run onboarding message with quick actions after installation.",
+  "config.commonRulesEnabled.description": "Append configurable general optimization rules to the generated prompt.",
+  "config.commonRulesAppendBuiltIn.description": "Append the built-in general optimization suggestions.",
+  "config.commonRulesCustomRules.description": "Additional custom rules to append to the optimized prompt.",
+  "config.mcpDefaultTargetModel.description": "Default target model used by the MCP intercept workflow.",
+  "config.mcpPreviewBeforeSend.description": "In the MCP intercept workflow, show the optimized prompt first and wait for manual send.",
+  "config.mcpAutoSend.description": "In the MCP intercept workflow, allow automatic forwarding after optimization."
 }

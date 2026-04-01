@@ -11,6 +11,11 @@ Supported targets:
 - Gemini
 - DeepSeek
 
+Supported workflows:
+
+- VS Code / Cursor extension commands
+- MCP server for Cursor and other MCP-capable IDEs
+
 ## Features
 
 - Reads selected text or the full active editor
@@ -20,6 +25,8 @@ Supported targets:
 - Parses the request with simple local rules
 - Supports configurable model-based transformation through free local or hosted models
 - Normalizes remote model output back into the selected target format
+- Supports configurable common optimization rules with built-in and custom append rules
+- Bundles an MCP server for interception-style optimize-then-forward workflows
 - Replaces the original text with a model-specific optimized prompt
 
 ## New interaction points
@@ -31,6 +38,9 @@ Supported targets:
 - Command palette: `Prompt Optimizer: Send To Cursor Chat`
 - Command palette: `Prompt Optimizer: Quick Cursor Replace`
 - Command palette: `Prompt Optimizer: Status Bar Models`
+- Command palette: `Prompt Optimizer: Copy MCP Config`
+- Command palette: `Prompt Optimizer: Open MCP Guide`
+- Command palette: `Prompt Optimizer: MCP Intercept Preview`
 - Command palette: `Prompt Optimizer: Quick Fill ChatGPT`
 - Command palette: `Prompt Optimizer: Quick Fill Claude`
 - Command palette: `Prompt Optimizer: Quick Fill Gemini`
@@ -78,6 +88,9 @@ You can disable this with:
 
 This extension works on editor text, not by directly rewriting what you type inside the Cursor chat input box.
 
+That said, this repository now also includes an MCP server so Cursor or other IDEs can call a tool before the original send step.
+The exact "intercept input box automatically" behavior depends on what the host IDE exposes through MCP or workflow configuration.
+
 Use it in Cursor like this:
 
 1. Put your raw prompt in a normal editor tab, or copy it to the clipboard.
@@ -95,6 +108,84 @@ For automatic selection replacement, enable:
 
 - `promptOptimizer.selectionAutoOptimize.enabled`
 - `promptOptimizer.selectionAutoOptimize.debounceMs`
+
+## MCP workflow
+
+The extension package includes a bundled MCP server:
+
+`dist/mcpServer.js`
+
+It is designed for this chain:
+
+1. IDE captures the original prompt text
+2. IDE calls the MCP tool `optimize_prompt`
+3. Prompt Optimizer rewrites the prompt for the selected model
+4. The IDE either:
+   - shows a preview first and waits for manual send
+   - or auto-forwards the optimized prompt to the original chain
+
+Default behavior is preview-first, manual send.
+
+### What MCP can and cannot do
+
+- It can provide a standard tool that IDEs call before they send the prompt onward
+- It can return structured data such as `optimizedPrompt`, `previewBeforeSend`, `autoSend`, and applied common rules
+- It cannot force Cursor's private chat input box to be intercepted unless Cursor itself is configured to call the MCP tool in that step
+
+### MCP tools
+
+- `optimize_prompt`
+  - input: original text, target model, preview/send mode, optional remote model settings, optional custom rules
+  - output: optimized prompt, engine used, common rules used, preview/send hints
+- `get_setup_snippet`
+  - returns a ready-to-copy MCP configuration snippet
+
+### Copy MCP config from the extension
+
+Run:
+
+- `Prompt Optimizer: Copy MCP Config`
+
+Then choose:
+
+- Cursor
+- Claude Desktop
+- Cline / Roo / Continue
+- Generic MCP Client
+
+The extension will:
+
+- copy the JSON snippet to the clipboard
+- open the snippet in a new editor
+
+### Example Cursor MCP config
+
+```json
+{
+  "mcpServers": {
+    "prompt-optimizer": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/token-saving-plugin/dist/mcpServer.js"
+      ]
+    }
+  }
+}
+```
+
+### Preview-first intercept simulation inside the extension
+
+Run:
+
+- `Prompt Optimizer: MCP Intercept Preview`
+
+This command simulates the MCP workflow locally:
+
+1. reads selection, editor text, or clipboard
+2. optimizes with the configured MCP target model
+3. opens a preview document
+4. copies the optimized result
+5. if configured, can auto-paste into the active editor
 
 ## Configurable transformation
 
@@ -118,6 +209,34 @@ Key settings:
 - `promptOptimizer.selectionAutoOptimize.enabled`
 - `promptOptimizer.selectionAutoOptimize.debounceMs`
 - `promptOptimizer.onboarding.showOnStartup`
+- `promptOptimizer.commonRules.enabled`
+- `promptOptimizer.commonRules.appendBuiltIn`
+- `promptOptimizer.commonRules.customRules`
+- `promptOptimizer.mcp.defaultTargetModel`
+- `promptOptimizer.mcp.previewBeforeSend`
+- `promptOptimizer.mcp.autoSend`
+
+### Common rule examples
+
+Built-in rules cover:
+
+- remove filler and keep the prompt compact
+- preserve entities, APIs, and field names
+- prefer explicit tasks, constraints, and deliverables
+- avoid inventing business requirements
+- keep the structure flat and easy to paste
+
+Custom rules can be added in settings, for example:
+
+```json
+{
+  "promptOptimizer.commonRules.customRules": [
+    "prefer implementation-ready wording",
+    "keep response under 120 tokens when possible",
+    "preserve all business nouns exactly"
+  ]
+}
+```
 
 Recommended free usage patterns:
 

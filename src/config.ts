@@ -1,12 +1,21 @@
 import * as vscode from "vscode";
-import { TargetModel } from "./types";
-
-export type TransformationEngine = "local" | "remote";
-export type RemoteProvider = "ollama" | "openai-compatible";
-export type OutputLanguage = "english" | "source";
+import { OptimizationSettings, OutputLanguage, RemoteProvider, TargetModel, TransformationEngine } from "./types";
 
 export interface PromptOptimizerConfig {
   transformationEngine: TransformationEngine;
+  outputLanguage: OutputLanguage;
+  defaultTargetModel: TargetModel;
+  clipboardAutoPasteToActiveEditor: boolean;
+  cursorChatOpenAfterCopy: boolean;
+  selectionAutoOptimizeEnabled: boolean;
+  selectionAutoOptimizeDebounceMs: number;
+  onboardingShowOnStartup: boolean;
+  commonRulesEnabled: boolean;
+  commonRulesAppendBuiltIn: boolean;
+  commonRulesCustomRules: string[];
+  mcpDefaultTargetModel: TargetModel;
+  mcpPreviewBeforeSend: boolean;
+  mcpAutoSend: boolean;
   remoteProvider: RemoteProvider;
   remoteBaseUrl: string;
   remoteApiKey: string;
@@ -15,13 +24,6 @@ export interface PromptOptimizerConfig {
   remoteTimeoutMs: number;
   remoteSystemPrompt: string;
   fallbackToLocal: boolean;
-  outputLanguage: OutputLanguage;
-  defaultTargetModel: TargetModel;
-  clipboardAutoPasteToActiveEditor: boolean;
-  cursorChatOpenAfterCopy: boolean;
-  selectionAutoOptimizeEnabled: boolean;
-  selectionAutoOptimizeDebounceMs: number;
-  onboardingShowOnStartup: boolean;
 }
 
 export function getPromptOptimizerConfig(): PromptOptimizerConfig {
@@ -43,60 +45,51 @@ export function getPromptOptimizerConfig(): PromptOptimizerConfig {
     cursorChatOpenAfterCopy: config.get<boolean>("cursorChat.openAfterCopy", true),
     selectionAutoOptimizeEnabled: config.get<boolean>("selectionAutoOptimize.enabled", false),
     selectionAutoOptimizeDebounceMs: Math.max(config.get<number>("selectionAutoOptimize.debounceMs", 600), 150),
-    onboardingShowOnStartup: config.get<boolean>("onboarding.showOnStartup", true)
+    onboardingShowOnStartup: config.get<boolean>("onboarding.showOnStartup", true),
+    commonRulesEnabled: config.get<boolean>("commonRules.enabled", true),
+    commonRulesAppendBuiltIn: config.get<boolean>("commonRules.appendBuiltIn", true),
+    commonRulesCustomRules: sanitizeRules(config.get<unknown>("commonRules.customRules", [])),
+    mcpDefaultTargetModel: config.get<TargetModel>("mcp.defaultTargetModel", "cursor"),
+    mcpPreviewBeforeSend: config.get<boolean>("mcp.previewBeforeSend", true),
+    mcpAutoSend: config.get<boolean>("mcp.autoSend", false)
   };
 }
 
-export function buildRemoteHeaders(config: PromptOptimizerConfig): Record<string, string> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json"
+export function toOptimizationSettings(config: PromptOptimizerConfig): OptimizationSettings {
+  return {
+    transformationEngine: config.transformationEngine,
+    outputLanguage: config.outputLanguage,
+    remote: {
+      provider: config.remoteProvider,
+      baseUrl: config.remoteBaseUrl,
+      apiKey: config.remoteApiKey,
+      model: config.remoteModel,
+      temperature: config.remoteTemperature,
+      timeoutMs: config.remoteTimeoutMs,
+      systemPrompt: config.remoteSystemPrompt,
+      fallbackToLocal: config.fallbackToLocal
+    },
+    commonRules: {
+      enabled: config.commonRulesEnabled,
+      appendBuiltIn: config.commonRulesAppendBuiltIn,
+      customRules: config.commonRulesCustomRules
+    }
   };
-
-  if (config.remoteProvider === "openai-compatible" && config.remoteApiKey.trim()) {
-    headers.Authorization = `Bearer ${config.remoteApiKey.trim()}`;
-  }
-
-  return headers;
 }
 
-export function buildRemotePrompt(text: string, targetModel: TargetModel, outputLanguage: OutputLanguage): string {
-  const outputStyle = getOutputStyle(targetModel);
-  const languageRule =
-    outputLanguage === "english"
-      ? "Return English output unless the user explicitly requests another language."
-      : "Keep the user's original language when possible.";
-
-  return [
-    "Convert the user request into a shorter, clearer prompt for an AI coding assistant.",
-    "Do not explain your reasoning.",
-    "Do not use markdown code fences.",
-    "Keep the output flat and concise.",
-    languageRule,
-    `Target format: ${outputStyle}`,
-    "If details are missing, infer the smallest useful output.",
-    "",
-    "User request:",
-    text
-  ].join("\n");
-}
-
-function getOutputStyle(targetModel: TargetModel): string {
-  switch (targetModel) {
-    case "chatgpt":
-      return "Readable semi-structured prompt with short section labels like Input, Constraints, Output.";
-    case "cursor":
-      return "Minimal developer-friendly bullet list with a concise headline.";
-    case "codex":
-      return "Strict structure using TASK, INPUT, CONSTRAINTS, OUTPUT blocks.";
-    case "claude":
-      return "Readable structured prompt using Context, Requirements, Deliverable.";
-    case "gemini":
-      return "Clear prompt using Goal, Context, Constraints, Expected output.";
-    case "deepseek":
-      return "Compact engineering style using TASK, KEY INPUT, RULES, RESULT.";
-    default:
-      return "Strict structure using TASK, INPUT, CONSTRAINTS, OUTPUT blocks.";
+function sanitizeRules(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
 }
 
 function clamp(value: number, min: number, max: number): number {

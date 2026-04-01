@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { getPromptOptimizerConfig } from "./config";
 import { getModelIcon, getModelLabel, t } from "./i18n";
-import { optimizePrompt } from "./modelTransformer";
-import { OutputMode, SourcePayload, TargetModel } from "./types";
+import { buildMcpConfigSnippet, getBundledMcpServerPath, getMcpForwardingSummary } from "./mcpSupport";
+import { optimizePrompt, optimizePromptDetailed } from "./modelTransformer";
+import { McpClient, OutputMode, SourcePayload, TargetModel } from "./types";
 
 const MODEL_ITEMS: Array<{ label: string; model: TargetModel }> = [
   { label: "ChatGPT", model: "chatgpt" },
@@ -14,6 +15,12 @@ const MODEL_ITEMS: Array<{ label: string; model: TargetModel }> = [
 ];
 
 const QUICK_FILL_MODELS: TargetModel[] = ["chatgpt", "codex", "claude", "gemini", "deepseek"];
+const MCP_CLIENT_ITEMS: Array<{ label: string; client: McpClient }> = [
+  { label: "Cursor", client: "cursor" },
+  { label: "Claude Desktop", client: "claude-desktop" },
+  { label: "Cline / Roo / Continue", client: "cline" },
+  { label: "Generic MCP Client", client: "generic" }
+];
 
 const OUTPUT_MODE_ITEMS: Array<{ label: string; mode: OutputMode }> = [
   { label: "Replace in editor", mode: "replace" },
@@ -90,6 +97,15 @@ export function activate(context: vscode.ExtensionContext): void {
       await quickFillTargetModel(model);
     })
   );
+  const copyMcpConfigCommand = vscode.commands.registerCommand("promptOptimizer.copyMcpConfig", async () => {
+    await copyMcpConfigSnippet();
+  });
+  const openMcpGuideCommand = vscode.commands.registerCommand("promptOptimizer.openMcpGuide", async () => {
+    await openReadme();
+  });
+  const mcpPreviewCommand = vscode.commands.registerCommand("promptOptimizer.mcpInterceptPreview", async () => {
+    await runMcpInterceptPreview();
+  });
 
   primaryStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   primaryStatusBarItem.text = t("status.primary");
@@ -117,6 +133,9 @@ export function activate(context: vscode.ExtensionContext): void {
     cursorChatCommand,
     cursorReplaceCommand,
     statusModelCommand,
+    copyMcpConfigCommand,
+    openMcpGuideCommand,
+    mcpPreviewCommand,
     ...quickFillCommands,
     primaryStatusBarItem,
     modelStatusBarItem,
@@ -429,9 +448,71 @@ async function maybeAutoOptimizeSelection(event: vscode.TextEditorSelectionChang
   }, config.selectionAutoOptimizeDebounceMs);
 }
 
+async function runMcpInterceptPreview(): Promise<void> {
+  const config = getPromptOptimizerConfig();
+  const source = await getSource(vscode.window.activeTextEditor, {
+    preferClipboardFallback: true,
+    promptForMissingInput: true
+  });
+  if (!source) {
+    vscode.window.showWarningMessage(t("warning.noSourceAnywhere"));
+    return;
+  }
+
+  const result = await safelyOptimizeDetailed(source.text, config.mcpDefaultTargetModel);
+  if (!result) {
+    return;
+  }
+
+  const forwarding = getMcpForwardingSummary(
+    config.mcpDefaultTargetModel,
+    config.mcpPreviewBeforeSend,
+    config.mcpAutoSend
+  );
+
+  await openInNewEditor(
+    [
+      "# MCP Intercept Preview",
+      "",
+      `- target: ${getModelLabel(config.mcpDefaultTargetModel)}`,
+      `- engine: ${result.engineUsed}`,
+      `- common rules: ${result.appliedCommonRules.length > 0 ? "enabled" : "disabled"}`,
+      `- forwarding: ${forwarding}`,
+      "",
+      "## Optimized Prompt",
+      "",
+      result.optimizedPrompt
+    ].join("\n")
+  );
+
+  await vscode.env.clipboard.writeText(result.optimizedPrompt);
+
+  if (!config.mcpPreviewBeforeSend && config.mcpAutoSend) {
+    if (vscode.window.activeTextEditor && config.clipboardAutoPasteToActiveEditor) {
+      await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+      showPasteHint(config.mcpDefaultTargetModel, t("mcp.autosendActiveEditor"));
+      return;
+    }
+    showPasteHint(config.mcpDefaultTargetModel, t("mcp.autosendClipboard"));
+    return;
+  }
+
+  showPasteHint(config.mcpDefaultTargetModel, t("mcp.previewReady"));
+}
+
 async function safelyOptimize(text: string, targetModel: TargetModel): Promise<string | undefined> {
   try {
     return await optimizePrompt(text, targetModel);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown optimization error.";
+    vscode.window.showErrorMessage(`Prompt optimization failed: ${message}`);
+    return undefined;
+  }
+}
+
+async function safelyOptimizeDetailed(text: string, targetModel: TargetModel) {
+  try {
+    return await optimizePromptDetailed(text, targetModel);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown optimization error.";
     vscode.window.showErrorMessage(`Prompt optimization failed: ${message}`);
@@ -493,6 +574,35 @@ async function openReadme(): Promise<void> {
   } catch {
     // Ignore if README cannot be resolved in a packaged extension context.
   }
+}
+
+async function copyMcpConfigSnippet(): Promise<void> {
+  const picked = await vscode.window.showQuickPick(
+    MCP_CLIENT_ITEMS.map((item) => ({
+      label: item.label,
+      client: item.client
+    })),
+    {
+      placeHolder: t("picker.mcpClientPlaceholder")
+    }
+  );
+
+  if (!picked) {
+    return;
+  }
+
+  const basePath =
+    currentExtensionUri?.fsPath ??
+    vscode.extensions.all.find((extension) => extension.packageJSON?.name === "token-saving-plugin")?.extensionUri.fsPath;
+  if (!basePath) {
+    vscode.window.showWarningMessage(t("warning.mcpPathUnavailable"));
+    return;
+  }
+
+  const snippet = buildMcpConfigSnippet(picked.client, getBundledMcpServerPath(basePath));
+  await vscode.env.clipboard.writeText(snippet);
+  await openInNewEditor(snippet);
+  vscode.window.showInformationMessage(t("message.mcpConfigCopied"));
 }
 
 async function getSource(

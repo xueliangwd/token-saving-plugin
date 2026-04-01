@@ -2,7 +2,7 @@
   "name": "token-saving-plugin",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "local",
   "icon": "media/icon.png",
   "engines": {
@@ -20,6 +20,9 @@
     "onCommand:promptOptimizer.sendToCursorChat",
     "onCommand:promptOptimizer.quickCursorReplace",
     "onCommand:promptOptimizer.statusBarModels",
+    "onCommand:promptOptimizer.copyMcpConfig",
+    "onCommand:promptOptimizer.openMcpGuide",
+    "onCommand:promptOptimizer.mcpInterceptPreview",
     "onCommand:promptOptimizer.quickFill.chatgpt",
     "onCommand:promptOptimizer.quickFill.codex",
     "onCommand:promptOptimizer.quickFill.claude",
@@ -63,6 +66,21 @@
         "command": "promptOptimizer.statusBarModels",
         "title": "%command.statusBarModels.title%",
         "icon": "$(symbol-color)"
+      },
+      {
+        "command": "promptOptimizer.copyMcpConfig",
+        "title": "%command.copyMcpConfig.title%",
+        "icon": "$(server-environment)"
+      },
+      {
+        "command": "promptOptimizer.openMcpGuide",
+        "title": "%command.openMcpGuide.title%",
+        "icon": "$(book)"
+      },
+      {
+        "command": "promptOptimizer.mcpInterceptPreview",
+        "title": "%command.mcpInterceptPreview.title%",
+        "icon": "$(eye)"
       },
       {
         "command": "promptOptimizer.quickFill.chatgpt",
@@ -220,6 +238,15 @@
         },
         {
           "command": "promptOptimizer.quickFill.deepseek"
+        },
+        {
+          "command": "promptOptimizer.copyMcpConfig"
+        },
+        {
+          "command": "promptOptimizer.openMcpGuide"
+        },
+        {
+          "command": "promptOptimizer.mcpInterceptPreview"
         }
       ],
       "editor/title/context": [
@@ -363,6 +390,47 @@
           "type": "boolean",
           "default": true,
           "description": "%config.onboardingShowOnStartup.description%"
+        },
+        "promptOptimizer.commonRules.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.commonRulesEnabled.description%"
+        },
+        "promptOptimizer.commonRules.appendBuiltIn": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.commonRulesAppendBuiltIn.description%"
+        },
+        "promptOptimizer.commonRules.customRules": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "%config.commonRulesCustomRules.description%"
+        },
+        "promptOptimizer.mcp.defaultTargetModel": {
+          "type": "string",
+          "enum": [
+            "chatgpt",
+            "cursor",
+            "codex",
+            "claude",
+            "gemini",
+            "deepseek"
+          ],
+          "default": "cursor",
+          "description": "%config.mcpDefaultTargetModel.description%"
+        },
+        "promptOptimizer.mcp.previewBeforeSend": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.mcpPreviewBeforeSend.description%"
+        },
+        "promptOptimizer.mcp.autoSend": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.mcpAutoSend.description%"
         }
       }
     }
