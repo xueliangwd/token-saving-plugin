@@ -1,7 +1,7 @@
 {
   "name": "token-saving-plugin",
-  "displayName": "Prompt Optimizer",
-  "description": "Optimize natural language prompts into lightweight model-specific formats for ChatGPT, Cursor, and Codex.",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "version": "0.0.1",
   "publisher": "local",
   "icon": "media/icon.png",
@@ -30,51 +30,51 @@
     "commands": [
       {
         "command": "promptOptimizer.run",
-        "title": "Optimize Prompt / 优化提示词"
+        "title": "%command.run.title%"
       },
       {
         "command": "promptOptimizer.setupWizard",
-        "title": "Prompt Optimizer: Setup Wizard / 设置向导"
+        "title": "%command.setupWizard.title%"
       },
       {
         "command": "promptOptimizer.sendToNewEditor",
-        "title": "Prompt Optimizer: Send To New Editor / 发送到新编辑器"
+        "title": "%command.sendToNewEditor.title%"
       },
       {
         "command": "promptOptimizer.optimizeClipboardPaste",
-        "title": "Prompt Optimizer: Optimize Clipboard And Paste / 优化剪贴板并粘贴"
+        "title": "%command.optimizeClipboardPaste.title%"
       },
       {
         "command": "promptOptimizer.sendToCursorChat",
-        "title": "Prompt Optimizer: Send To Cursor Chat / 发送到 Cursor Chat"
+        "title": "%command.sendToCursorChat.title%"
       },
       {
         "command": "promptOptimizer.quickCursorReplace",
-        "title": "Prompt Optimizer: Quick Cursor Replace / 一键替换为 Cursor 风格"
+        "title": "%command.quickCursorReplace.title%"
       },
       {
         "command": "promptOptimizer.statusBarModels",
-        "title": "Prompt Optimizer: Status Bar Models / 状态栏模型菜单"
+        "title": "%command.statusBarModels.title%"
       },
       {
         "command": "promptOptimizer.quickFill.chatgpt",
-        "title": "Prompt Optimizer: Quick Fill ChatGPT / 快速填充 ChatGPT"
+        "title": "%command.quickFillChatgpt.title%"
       },
       {
         "command": "promptOptimizer.quickFill.codex",
-        "title": "Prompt Optimizer: Quick Fill Codex / 快速填充 Codex"
+        "title": "%command.quickFillCodex.title%"
       },
       {
         "command": "promptOptimizer.quickFill.claude",
-        "title": "Prompt Optimizer: Quick Fill Claude / 快速填充 Claude"
+        "title": "%command.quickFillClaude.title%"
       },
       {
         "command": "promptOptimizer.quickFill.gemini",
-        "title": "Prompt Optimizer: Quick Fill Gemini / 快速填充 Gemini"
+        "title": "%command.quickFillGemini.title%"
       },
       {
         "command": "promptOptimizer.quickFill.deepseek",
-        "title": "Prompt Optimizer: Quick Fill DeepSeek / 快速填充 DeepSeek"
+        "title": "%command.quickFillDeepseek.title%"
       }
     ],
     "menus": {
@@ -184,7 +184,7 @@
       }
     ],
     "configuration": {
-      "title": "Prompt Optimizer",
+      "title": "%config.title%",
       "properties": {
         "promptOptimizer.defaultTargetModel": {
           "type": "string",
@@ -197,7 +197,7 @@
             "deepseek"
           ],
           "default": "cursor",
-          "description": "Default target model for quick actions like clipboard paste, send to new editor, and auto optimization."
+          "description": "%config.defaultTargetModel.description%"
         },
         "promptOptimizer.transformationEngine": {
           "type": "string",
@@ -206,7 +206,7 @@
             "remote"
           ],
           "default": "local",
-          "description": "Choose whether to optimize prompts with local rules or a configured model endpoint."
+          "description": "%config.transformationEngine.description%"
         },
         "promptOptimizer.outputLanguage": {
           "type": "string",
@@ -215,7 +215,7 @@
             "source"
           ],
           "default": "english",
-          "description": "Prefer English output or preserve the user's original language."
+          "description": "%config.outputLanguage.description%"
         },
         "promptOptimizer.remote.provider": {
           "type": "string",
@@ -224,71 +224,71 @@
             "openai-compatible"
           ],
           "default": "ollama",
-          "description": "Remote provider type. Ollama works well for local free models; openai-compatible works with compatible hosted APIs."
+          "description": "%config.remoteProvider.description%"
         },
         "promptOptimizer.remote.baseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:11434/v1",
-          "description": "Base URL for the remote model endpoint. Example for Ollama: http://127.0.0.1:11434/v1"
+          "description": "%config.remoteBaseUrl.description%"
         },
         "promptOptimizer.remote.apiKey": {
           "type": "string",
           "default": "",
-          "markdownDescription": "API key for openai-compatible providers. Leave empty for local Ollama."
+          "markdownDescription": "%config.remoteApiKey.description%"
         },
         "promptOptimizer.remote.model": {
           "type": "string",
           "default": "qwen2.5:3b-instruct",
-          "description": "Remote model name. Use any available free or local model name supported by your provider."
+          "description": "%config.remoteModel.description%"
         },
         "promptOptimizer.remote.temperature": {
           "type": "number",
           "default": 0.2,
           "minimum": 0,
           "maximum": 1,
-          "description": "Sampling temperature for remote model optimization."
+          "description": "%config.remoteTemperature.description%"
         },
         "promptOptimizer.remote.timeoutMs": {
           "type": "number",
           "default": 30000,
           "minimum": 1000,
-          "description": "Timeout in milliseconds for remote model requests."
+          "description": "%config.remoteTimeoutMs.description%"
         },
         "promptOptimizer.remote.systemPrompt": {
           "type": "string",
           "default": "",
-          "description": "Optional custom system prompt for the remote model."
+          "description": "%config.remoteSystemPrompt.description%"
         },
         "promptOptimizer.remote.fallbackToLocal": {
           "type": "boolean",
           "default": true,
-          "description": "Fall back to local rule-based optimization if the remote request fails."
+          "description": "%config.remoteFallbackToLocal.description%"
         },
         "promptOptimizer.clipboard.autoPasteToActiveEditor": {
           "type": "boolean",
           "default": true,
-          "description": "When optimizing clipboard content, paste the optimized result into the active editor if one is focused."
+          "description": "%config.clipboardAutoPaste.description%"
         },
         "promptOptimizer.cursorChat.openAfterCopy": {
           "type": "boolean",
           "default": true,
-          "description": "Try to focus an available chat panel after copying an optimized Cursor-style prompt."
+          "description": "%config.cursorChatOpenAfterCopy.description%"
         },
         "promptOptimizer.selectionAutoOptimize.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Automatically optimize selected text after a short delay."
+          "description": "%config.selectionAutoOptimizeEnabled.description%"
         },
         "promptOptimizer.selectionAutoOptimize.debounceMs": {
           "type": "number",
           "default": 600,
           "minimum": 150,
-          "description": "Delay before auto-optimizing a selection."
+          "description": "%config.selectionAutoOptimizeDebounce.description%"
         },
         "promptOptimizer.onboarding.showOnStartup": {
           "type": "boolean",
           "default": true,
-          "description": "Show a first-run onboarding message with quick actions after installation."
+          "description": "%config.onboardingShowOnStartup.description%"
         },
         "promptOptimizer._recentModelsShadow": {
           "type": "array",
@@ -296,7 +296,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Internal setting used to store recently used models for the status bar menu.",
+          "markdownDescription": "%config.recentModelsShadow.description%",
           "scope": "machine-overridable"
         }
       }

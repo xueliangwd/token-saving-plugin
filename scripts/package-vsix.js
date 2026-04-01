@@ -16,6 +16,8 @@ const extensionDir = path.join(tempDir, "extension");
 fs.mkdirSync(extensionDir, { recursive: true });
 
 copyIntoExtension("package.json");
+copyIntoExtension("package.nls.json");
+copyIntoExtension("package.nls.zh-cn.json");
 copyIntoExtension("README.md");
 copyIntoExtension(".gitignore");
 copyIntoExtension(".vscode/launch.json");
