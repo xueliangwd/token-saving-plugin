@@ -33,6 +33,7 @@
   "config.cursorChatOpenAfterCopy.description": "复制 Cursor 风格提示词后，尝试自动聚焦到可用的聊天面板。",
   "config.selectionAutoOptimizeEnabled.description": "在短暂延迟后自动优化选中的文本。",
   "config.selectionAutoOptimizeDebounce.description": "自动优化选中文本前的延迟时间。",
+  "config.selectionAutoOptimizeDocumentPrefix.description": "只有文档开头匹配这个前缀时，才允许自动优化。保持非空可以避免误改其它文件。",
   "config.onboardingShowOnStartup.description": "安装后首次启动时显示带快捷操作的引导提示。",
   "config.commonRulesEnabled.description": "是否在生成后的提示词中追加可配置的通用优化规则。",
   "config.commonRulesAppendBuiltIn.description": "是否追加内置通用优化建议。",

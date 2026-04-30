@@ -1,8 +1,9 @@
 import { applyCommonRules, getCommonRules } from "./commonRules";
 import { formatPrompt } from "./modelAdapters";
+import { applyModelStrategy, getModelStrategy } from "./modelStrategy";
 import { normalizeOptimizedPrompt } from "./normalizer";
 import { parsePrompt } from "./promptProcessor";
-import { OptimizationResult, OptimizationSettings, ParsedPrompt, TargetModel } from "./types";
+import { OptimizationResult, OptimizationSettings, TargetModel } from "./types";
 
 export async function optimizePromptWithSettings(
   text: string,
@@ -19,7 +20,7 @@ export async function optimizePromptWithSettings(
     }
   }
 
-  const parsed = applyCommonRules(parsePrompt(text), settings.commonRules);
+  const parsed = applyModelStrategy(applyCommonRules(parsePrompt(text), settings.commonRules), targetModel);
 
   return {
     optimizedPrompt: formatPrompt(parsed, targetModel),
@@ -53,6 +54,7 @@ export function buildRemotePrompt(
       ? "Return English output unless the user explicitly requests another language."
       : "Keep the user's original language when possible.";
   const commonRules = getCommonRules(settings.commonRules);
+  const strategy = getModelStrategy(targetModel);
 
   return [
     "Convert the user request into a shorter, clearer prompt for an AI coding assistant.",
@@ -62,6 +64,8 @@ export function buildRemotePrompt(
     languageRule,
     `Target format: ${outputStyle}`,
     "If details are missing, infer the smallest useful output.",
+    "Model-specific optimization strategy:",
+    `- ${strategy.remoteGuidance.join("\n- ")}`,
     commonRules.length > 0 ? "Append these general optimization rules when they do not conflict:" : "",
     commonRules.length > 0 ? `- ${commonRules.join("\n- ")}` : "",
     "",
@@ -116,7 +120,7 @@ async function optimizeWithRemoteModel(
     }
 
     const normalized = normalizeOptimizedPrompt(text, result, targetModel);
-    const parsed = applyCommonRules(parsePrompt(normalized), settings.commonRules);
+    const parsed = applyModelStrategy(applyCommonRules(parsePrompt(normalized), settings.commonRules), targetModel);
 
     return {
       optimizedPrompt: formatPrompt(parsed, targetModel),

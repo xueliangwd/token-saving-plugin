@@ -6,6 +6,7 @@ const { formatPrompt } = require("../dist/modelAdapters");
 const { normalizeOptimizedPrompt } = require("../dist/normalizer");
 const { optimizePromptWithSettings } = require("../dist/optimizerCore");
 const { buildMcpConfigSnippet } = require("../dist/mcpSupport");
+const { applyModelStrategy } = require("../dist/modelStrategy");
 
 const chineseInput = "帮我写一个带用户名密码校验的 Flutter 登录页面";
 const parsedChinese = parsePrompt(chineseInput);
@@ -65,6 +66,19 @@ const normalized = normalizeOptimizedPrompt(
 assert.ok(normalized.includes("TASK: build vscode extension"));
 assert.ok(normalized.includes("INPUT:"));
 assert.ok(normalized.includes("CONSTRAINTS:"));
+
+const deepseekStrategy = applyModelStrategy(
+  {
+    task: "optimize prompt",
+    input: ["a", "b", "c", "d", "e", "f"],
+    constraints: ["1", "2", "3", "4", "5"],
+    output: ["implementation", "optimized prompt", "typescript code"]
+  },
+  "deepseek"
+);
+assert.equal(deepseekStrategy.input.length, 5);
+assert.equal(deepseekStrategy.constraints.length, 4);
+assert.ok(!deepseekStrategy.output.includes("implementation"));
 
 (async () => {
   const mcpSource = "使用 mcp 拦截 cursor 输入内容，先优化，再预览后手动发送，支持自动发送配置";

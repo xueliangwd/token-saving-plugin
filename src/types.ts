@@ -26,6 +26,13 @@ export interface CommonRulesConfig {
   customRules: string[];
 }
 
+export interface ModelStrategy {
+  remoteGuidance: string[];
+  maxInput: number;
+  maxConstraints: number;
+  maxOutput: number;
+}
+
 export interface RemoteConfig {
   provider: RemoteProvider;
   baseUrl: string;

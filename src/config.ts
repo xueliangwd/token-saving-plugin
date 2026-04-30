@@ -9,6 +9,7 @@ export interface PromptOptimizerConfig {
   cursorChatOpenAfterCopy: boolean;
   selectionAutoOptimizeEnabled: boolean;
   selectionAutoOptimizeDebounceMs: number;
+  selectionAutoOptimizeDocumentPrefix: string;
   onboardingShowOnStartup: boolean;
   commonRulesEnabled: boolean;
   commonRulesAppendBuiltIn: boolean;
@@ -45,6 +46,7 @@ export function getPromptOptimizerConfig(): PromptOptimizerConfig {
     cursorChatOpenAfterCopy: config.get<boolean>("cursorChat.openAfterCopy", true),
     selectionAutoOptimizeEnabled: config.get<boolean>("selectionAutoOptimize.enabled", false),
     selectionAutoOptimizeDebounceMs: Math.max(config.get<number>("selectionAutoOptimize.debounceMs", 600), 150),
+    selectionAutoOptimizeDocumentPrefix: config.get<string>("selectionAutoOptimize.documentPrefix", "PROMPT_OPTIMIZER:").trim(),
     onboardingShowOnStartup: config.get<boolean>("onboarding.showOnStartup", true),
     commonRulesEnabled: config.get<boolean>("commonRules.enabled", true),
     commonRulesAppendBuiltIn: config.get<boolean>("commonRules.appendBuiltIn", true),

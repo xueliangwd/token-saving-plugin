@@ -2,7 +2,7 @@
   "name": "token-saving-plugin",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "publisher": "local",
   "icon": "media/icon.png",
   "engines": {
@@ -385,6 +385,11 @@
           "default": 600,
           "minimum": 150,
           "description": "%config.selectionAutoOptimizeDebounce.description%"
+        },
+        "promptOptimizer.selectionAutoOptimize.documentPrefix": {
+          "type": "string",
+          "default": "PROMPT_OPTIMIZER:",
+          "description": "%config.selectionAutoOptimizeDocumentPrefix.description%"
         },
         "promptOptimizer.onboarding.showOnStartup": {
           "type": "boolean",

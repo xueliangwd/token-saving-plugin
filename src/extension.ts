@@ -403,6 +403,9 @@ async function maybeAutoOptimizeSelection(event: vscode.TextEditorSelectionChang
   }
 
   const editor = event.textEditor;
+  if (!isEligibleAutoOptimizeDocument(editor, config.selectionAutoOptimizeDocumentPrefix)) {
+    return;
+  }
   const selection = editor.selection;
   if (selection.isEmpty) {
     return;
@@ -446,6 +449,16 @@ async function maybeAutoOptimizeSelection(event: vscode.TextEditorSelectionChang
       // Keep auto mode quiet on failure.
     }
   }, config.selectionAutoOptimizeDebounceMs);
+}
+
+function isEligibleAutoOptimizeDocument(editor: vscode.TextEditor, requiredPrefix: string): boolean {
+  const prefix = requiredPrefix.trim();
+  if (!prefix) {
+    return false;
+  }
+
+  const headText = editor.document.getText(new vscode.Range(0, 0, Math.min(editor.document.lineCount - 1, 4), 200));
+  return headText.trimStart().startsWith(prefix);
 }
 
 async function runMcpInterceptPreview(): Promise<void> {

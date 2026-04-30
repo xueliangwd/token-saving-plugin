@@ -108,6 +108,15 @@ For automatic selection replacement, enable:
 
 - `promptOptimizer.selectionAutoOptimize.enabled`
 - `promptOptimizer.selectionAutoOptimize.debounceMs`
+- `promptOptimizer.selectionAutoOptimize.documentPrefix`
+
+Recommended document prefix:
+
+```text
+PROMPT_OPTIMIZER:
+```
+
+Only documents whose beginning matches that prefix will trigger auto optimization. This prevents accidental edits in normal notes or code files.
 
 ## MCP workflow
 
@@ -208,6 +217,7 @@ Key settings:
 - `promptOptimizer.cursorChat.openAfterCopy`
 - `promptOptimizer.selectionAutoOptimize.enabled`
 - `promptOptimizer.selectionAutoOptimize.debounceMs`
+- `promptOptimizer.selectionAutoOptimize.documentPrefix`
 - `promptOptimizer.onboarding.showOnStartup`
 - `promptOptimizer.commonRules.enabled`
 - `promptOptimizer.commonRules.appendBuiltIn`
